@@ -1,45 +1,53 @@
 import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/common';
 import { SignupDto } from '../dtos/signup.dto';
-import { User } from '../interfaces/user/user.interface';
 import { JwtService } from '@nestjs/jwt';
 import argon2 from 'argon2';
 import { argon2Options } from '../constants/argon2options.const';
 import { SigninDto } from '../dtos/signin.dto';
+import { Model } from 'mongoose';
+import { DbUser } from '../schemas/dbUser.schema';
+import { InjectModel } from '@nestjs/mongoose';
 
 @Injectable()
 export class AuthService {
-  private users: User[] = [];
+  constructor(
+    private readonly jwtService: JwtService,
+    @InjectModel(DbUser.name) private dbUserModel: Model<DbUser>,
+  ) {}
 
-  constructor(private readonly jwtService: JwtService) {}
-
-  findUser(username: string): User | undefined {
-    return this.users.find((user) => user.username === username);
+  async findUser(username: string) {
+    const res = await this.dbUserModel.find({ username: username }).exec();
+    if (res.length > 0) {
+      return res[0];
+    }
+    return null;
   }
 
   createAccessToken(username: string): { accessToken: string } {
-    return { accessToken: this.jwtService.sign(username) };
+    return { accessToken: this.jwtService.sign({ sub: username }) };
   }
 
   async signup(newUser: SignupDto): Promise<{ accessToken: string }> {
-    if (this.findUser(newUser.username)) {
+    if ((await this.findUser(newUser.username)) !== null) {
       throw new ConflictException(`User ${newUser.username} already exists`);
     }
 
-    const user: User = {
+    const user = new this.dbUserModel({
       username: newUser.username,
       password: await argon2.hash(newUser.password, argon2Options),
       teamName: newUser.teamName,
-    };
+    });
 
-    this.users.push(user);
+    await user.save();
+
     return this.createAccessToken(user.username);
   }
 
   async signin(user: SigninDto): Promise<{ accessToken: string }> {
     try {
-      const existingUser = this.findUser(user.username);
+      const existingUser = await this.findUser(user.username);
       // Do not return any detail about the authentication error to prevent attacks
-      if (!existingUser) {
+      if (existingUser === null) {
         throw new Error();
       }
 

@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { JwtService } from '@nestjs/jwt';
-import {User} from "../../interfaces/user/user.interface";
+import {DbUser} from "../../schemas/dbUser.schema";
 
 @Injectable()
 export class JwtGuard implements CanActivate {
@@ -14,7 +14,7 @@ export class JwtGuard implements CanActivate {
     }>(context);
     try {
       const token = this.getToken(request);
-      const user: User = this.jwtService.verify(token);
+      const user: DbUser = this.jwtService.verify(token);
       // @ts-expect-error This is a quirk with the TS type system (somehow?)
       request['user'] = user;
       return true;
