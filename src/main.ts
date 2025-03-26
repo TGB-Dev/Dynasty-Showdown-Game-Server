@@ -11,6 +11,7 @@ async function bootstrap() {
     .setTitle('Dynasty Showdown Game Server Documentation')
     .setVersion('1.0')
     .setDescription('The documentation of the Dynasty Showdown Game Server')
+    .addBearerAuth()
     .build();
 
   const documentFactory = () => SwaggerModule.createDocument(app, swaggerConfig);
