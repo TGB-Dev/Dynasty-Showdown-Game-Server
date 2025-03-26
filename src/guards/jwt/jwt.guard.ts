@@ -1,40 +1,33 @@
-import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { DbUser } from '../../schemas/dbUser.schema';
+import { User } from '../../schemas/user.schema';
+import { Request } from 'express';
 
 @Injectable()
 export class JwtGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    const request = this.getRequest<{
-      headers: Record<string, string | string[]>;
-      user?: Record<string, unknown>;
-    }>(context);
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest<Request>();
     try {
-      const token = this.getToken(request);
-      const user: DbUser = this.jwtService.verify(token);
-      // @ts-expect-error This is a quirk with the TS type system (somehow?)
+      const token = this.extractTokenFromHeader(request);
+
+      if (!token) {
+        throw new UnauthorizedException();
+      }
+
+      const user: User = await this.jwtService.verifyAsync(token);
       request['user'] = user;
       return true;
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
+      Logger.error(error);
       throw new UnauthorizedException();
     }
   }
 
-  protected getRequest<T>(context: ExecutionContext): T {
-    return context.switchToHttp().getRequest();
-  }
-
-  protected getToken(request: { headers: Record<string, string | string[]> }): string {
-    const authorization = request.headers['Authorization'];
-    if (!authorization || Array.isArray(authorization)) {
-      throw new Error('Invalid Authorization header');
-    }
-
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [_, token] = authorization.split(' ');
-    return token;
+  private extractTokenFromHeader(request: Request): string | undefined {
+    const [type, token] = request.headers.authorization?.split(' ') ?? [];
+    return type === 'Bearer' ? token : undefined;
   }
 }

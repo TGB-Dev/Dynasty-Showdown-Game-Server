@@ -5,14 +5,15 @@ import argon2 from 'argon2';
 import { argon2Options } from '../constants/argon2options.const';
 import { SigninDto } from '../dtos/signin.dto';
 import { Model } from 'mongoose';
-import { DbUser } from '../schemas/dbUser.schema';
+import { User } from '../schemas/user.schema';
 import { InjectModel } from '@nestjs/mongoose';
+import { AuthorizationDto } from '../dtos/authorization.dto';
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    @InjectModel(DbUser.name) private dbUserModel: Model<DbUser>,
+    @InjectModel(User.name) private dbUserModel: Model<User>,
   ) {}
 
   async findUser(username: string) {
@@ -23,13 +24,19 @@ export class AuthService {
     return null;
   }
 
-  createAccessToken(username: string): { accessToken: string } {
-    return { accessToken: this.jwtService.sign({ sub: username }) };
+  async createAccessToken(username: string): Promise<AuthorizationDto> {
+    return {
+      accessToken: await this.jwtService.signAsync({ sub: username }),
+    };
   }
 
-  async signup(newUser: SignupDto): Promise<{ accessToken: string }> {
+  async signup(newUser: SignupDto): Promise<AuthorizationDto> {
     if ((await this.findUser(newUser.username)) !== null) {
       throw new ConflictException(`User ${newUser.username} already exists`);
+    }
+
+    if (newUser.password !== newUser.confirmationPassword) {
+      throw new ConflictException(`Passwords do not match`);
     }
 
     const user = new this.dbUserModel({
@@ -40,10 +47,10 @@ export class AuthService {
 
     await user.save();
 
-    return this.createAccessToken(user.username);
+    return await this.createAccessToken(user.username);
   }
 
-  async signin(user: SigninDto): Promise<{ accessToken: string }> {
+  async signin(user: SigninDto): Promise<AuthorizationDto> {
     try {
       const existingUser = await this.findUser(user.username);
       // Do not return any detail about the authentication error to prevent attacks
@@ -56,7 +63,7 @@ export class AuthService {
         throw new Error();
       }
 
-      return this.createAccessToken(user.username);
+      return await this.createAccessToken(user.username);
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (_) {
       throw new UnauthorizedException('Username or password is invalid. Please try again.');
