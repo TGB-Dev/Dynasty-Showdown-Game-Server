@@ -1,7 +1,7 @@
 import { HydratedDocument } from 'mongoose';
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
-export type DbUserDocument = HydratedDocument<User>;
+export type UserDocument = HydratedDocument<User>;
 
 @Schema()
 export class User {
@@ -13,6 +13,9 @@ export class User {
 
   @Prop({ required: true })
   teamName: string;
+
+  @Prop({ required: false, type: String, enum: ['Normal', 'PublicView', 'Admin'], default: 'Normal' })
+  role: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

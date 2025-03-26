@@ -13,11 +13,11 @@ import { AuthorizationDto } from '../dtos/authorization.dto';
 export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
-    @InjectModel(User.name) private dbUserModel: Model<User>,
+    @InjectModel(User.name) private userModel: Model<User>,
   ) {}
 
   async findUser(username: string) {
-    const res = await this.dbUserModel.find({ username: username }).exec();
+    const res = await this.userModel.find({ username: username }).exec();
     if (res.length > 0) {
       return res[0];
     }
@@ -39,7 +39,7 @@ export class AuthService {
       throw new ConflictException(`Passwords do not match`);
     }
 
-    const user = new this.dbUserModel({
+    const user = new this.userModel({
       username: newUser.username,
       password: await argon2.hash(newUser.password, argon2Options),
       teamName: newUser.teamName,
