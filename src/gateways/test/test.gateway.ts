@@ -4,7 +4,7 @@ import { Socket } from 'socket.io';
 @WebSocketGateway()
 export class TestGateway {
   @SubscribeMessage('test')
-  handleMessage(@MessageBody() data: string, @ConnectedSocket() client: Socket) {
+  handleTest(@MessageBody() data: string, @ConnectedSocket() client: Socket) {
     client.join('testRoom');
 
     const rooms: string[] = [];

@@ -1,16 +1,10 @@
-import { SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
-import { InjectModel } from '@nestjs/mongoose';
-import { Question } from '../../schemas/question.schema';
-import { Model } from 'mongoose';
+import { ConnectedSocket, MessageBody, SubscribeMessage, WebSocketGateway } from '@nestjs/websockets';
+import { Socket } from 'socket.io';
 
 @WebSocketGateway()
 export class MatChieuHoangGiaGateway {
-  private readonly gameId = 1;
-
-  constructor(@InjectModel(Question.name) private questionModel: Model<Question>) {}
-
-  @SubscribeMessage('message')
-  handleMessage(client: any, payload: any): string {
-    return 'Hello world!';
+  @SubscribeMessage('mchg-test')
+  handleTest(@ConnectedSocket() socket: Socket, @MessageBody() data: string) {
+    socket.emit('res', `${data}, ${socket.id}`);
   }
 }

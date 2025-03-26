@@ -2,7 +2,7 @@ import { ConflictException, Injectable, UnauthorizedException } from '@nestjs/co
 import { SignupDto } from '../dtos/signup.dto';
 import { JwtService } from '@nestjs/jwt';
 import argon2 from 'argon2';
-import { argon2Options } from '../constants/argon2options.const';
+import { argon2Options } from '../constants/argon2-options.const';
 import { SigninDto } from '../dtos/signin.dto';
 import { Model } from 'mongoose';
 import { User } from '../schemas/user.schema';
@@ -18,6 +18,14 @@ export class AuthService {
 
   async findUser(username: string) {
     const res = await this.userModel.find({ username: username }).exec();
+    if (res.length > 0) {
+      return res[0];
+    }
+    return null;
+  }
+
+  async getUserProfile(username: string) {
+    const res = await this.userModel.find({ username: username }, 'username teamName').exec();
     if (res.length > 0) {
       return res[0];
     }

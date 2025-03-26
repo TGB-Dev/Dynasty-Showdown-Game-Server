@@ -3,6 +3,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 
 export type UserDocument = HydratedDocument<User>;
 
+export type UserRole = 'player' | 'publicView' | 'admin';
+
 @Schema()
 export class User {
   @Prop({ required: true })
@@ -14,8 +16,8 @@ export class User {
   @Prop({ required: true })
   teamName: string;
 
-  @Prop({ required: false, type: String, enum: ['Normal', 'PublicView', 'Admin'], default: 'Normal' })
-  role: string;
+  @Prop({ required: false, type: String, enum: ['player', 'publicView', 'admin'], default: 'user' })
+  role: UserRole;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);

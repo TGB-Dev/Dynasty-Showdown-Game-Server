@@ -3,7 +3,7 @@ import { AuthService } from './auth.service';
 import { SignupDto } from '../dtos/signup.dto';
 import { SigninDto } from '../dtos/signin.dto';
 import { AuthorizationDto } from '../dtos/authorization.dto';
-import {ApiBearerAuth, ApiResponse} from '@nestjs/swagger';
+import { ApiBearerAuth, ApiResponse } from '@nestjs/swagger';
 import { JwtGuard } from '../guards/jwt/jwt.guard';
 
 @Controller('auth')
@@ -27,7 +27,7 @@ export class AuthController {
   @ApiBearerAuth()
   @UseGuards(JwtGuard)
   @Get('profile')
-  getProfile(@Request() req: Request & { user: never }) {
-    return req.user;
+  getProfile(@Request() req: Request & { user: { sub: string; iat: number } }) {
+    return this.authService.getUserProfile(req.user.sub);
   }
 }

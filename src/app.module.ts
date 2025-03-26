@@ -3,11 +3,25 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from './auth/auth.module';
-import { globalConfigs } from './constants/globalConfig.const';
+import { globalConfigs } from './constants/global-config.const';
 import { TestModule } from './gateways/test/test.module';
+import { CuocDuaVuongQuyenModule } from './gateways/cuoc-dua-vuong-quyen/cuoc-dua-vuong-quyen.module';
+import { MatChieuHoangGiaModule } from './gateways/mat-chieu-hoang-gia/mat-chieu-hoang-gia.module';
+import { TheGrandOrderModule } from './gateways/the-grand-order/the-grand-order.module';
+import { RiseOfKingdomModule } from './gateways/rise-of-kingdom/rise-of-kingdom.module';
+import { MainControlModule } from './gateways/main-control/main-control.module';
 
 @Module({
-  imports: [MongooseModule.forRoot(globalConfigs.mongodbUri), TestModule, AuthModule],
+  imports: [
+    MongooseModule.forRoot(globalConfigs.mongodbUri),
+    TestModule,
+    AuthModule,
+    MainControlModule,
+    CuocDuaVuongQuyenModule,
+    MatChieuHoangGiaModule,
+    TheGrandOrderModule,
+    RiseOfKingdomModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
