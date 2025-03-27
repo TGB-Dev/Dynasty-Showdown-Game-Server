@@ -8,8 +8,5 @@ export class SignupDto {
   password: string;
 
   @ApiProperty()
-  confirmationPassword: string;
-
-  @ApiProperty()
   teamName: string;
 }

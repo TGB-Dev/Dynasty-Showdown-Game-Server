@@ -7,7 +7,7 @@ export type UserRole = 'player' | 'publicView' | 'admin';
 
 @Schema()
 export class User {
-  @Prop({ required: true })
+  @Prop({ required: true, index: true, unique: true })
   username: string;
 
   @Prop({ required: true })
@@ -16,7 +16,7 @@ export class User {
   @Prop({ required: true })
   teamName: string;
 
-  @Prop({ required: false, type: String, enum: ['player', 'publicView', 'admin'], default: 'user' })
+  @Prop({ required: false, type: String, enum: ['player', 'publicView', 'admin'], default: 'player' })
   role: UserRole;
 }
 

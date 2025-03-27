@@ -43,10 +43,6 @@ export class AuthService {
       throw new ConflictException(`User ${newUser.username} already exists`);
     }
 
-    if (newUser.password !== newUser.confirmationPassword) {
-      throw new ConflictException(`Passwords do not match`);
-    }
-
     const user = new this.userModel({
       username: newUser.username,
       password: await argon2.hash(newUser.password, argon2Options),
