@@ -6,7 +6,7 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { rooms } from '../../constants/rooms.const';
+import { rooms } from '../../common/constants/rooms.constant';
 
 @WebSocketGateway()
 export class MainControlGateway implements OnGatewayConnection {

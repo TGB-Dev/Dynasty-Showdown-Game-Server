@@ -4,7 +4,8 @@ import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { MongooseModule } from '@nestjs/mongoose';
 import { User, UserSchema } from '../schemas/user.schema';
-import { globalConfigs } from '../constants/global-config.const';
+import { globalConfigs } from '../common/constants/global-config.constant';
+import { UserModule } from '../user/user.module';
 
 @Module({
   imports: [
@@ -18,6 +19,8 @@ import { globalConfigs } from '../constants/global-config.const';
         schema: UserSchema,
       },
     ]),
+
+    UserModule,
   ],
   providers: [AuthService],
   controllers: [AuthController],

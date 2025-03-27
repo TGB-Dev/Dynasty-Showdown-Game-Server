@@ -1,14 +1,13 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
-import { globalConfigs } from './constants/global-config.const';
+import { globalConfigs } from './common/constants/global-config.constant';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // CORS
   app.enableCors();
-
 
   // Swagger configs
   const swaggerConfig = new DocumentBuilder()
