@@ -15,10 +15,6 @@ export class SignupPipe implements PipeTransform {
       errors.push('Password must be at least 8 characters');
     }
 
-    if (value.password !== value.confirmationPassword) {
-      errors.push('Password and confirmation password do not match');
-    }
-
     if (errors.length > 0) {
       throw new BadRequestException(errors.join('\n'));
     }

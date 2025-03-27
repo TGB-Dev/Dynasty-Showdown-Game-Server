@@ -6,6 +6,10 @@ import { globalConfigs } from './constants/global-config.const';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // CORS
+  app.enableCors();
+
+
   // Swagger configs
   const swaggerConfig = new DocumentBuilder()
     .setTitle('Dynasty Showdown Game Server Documentation')
