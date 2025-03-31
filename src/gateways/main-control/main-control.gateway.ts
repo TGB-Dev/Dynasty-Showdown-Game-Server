@@ -6,7 +6,6 @@ import {
   WebSocketGateway,
 } from '@nestjs/websockets';
 import { Socket } from 'socket.io';
-import { rooms } from '../../common/constants/rooms.constant';
 
 @WebSocketGateway()
 export class MainControlGateway implements OnGatewayConnection {
@@ -15,11 +14,7 @@ export class MainControlGateway implements OnGatewayConnection {
     socket.emit('res', `${data}, ${socket.id}`);
   }
 
-  handleConnection(@ConnectedSocket() socket: Socket) {
-    rooms.forEach((room: string) => {
-      socket.join(room);
-    });
-  }
+  handleConnection(@ConnectedSocket() socket: Socket) {}
 
   @SubscribeMessage('rooms')
   handleRooms(@ConnectedSocket() socket: Socket) {

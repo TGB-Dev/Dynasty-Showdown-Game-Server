@@ -1,9 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-export class SigninDto {
+export class SignInReqDto {
   @ApiProperty()
   username: string;
 
   @ApiProperty()
   password: string;
+}
+
+export class SignInResDto {
+  accessToken: string;
 }

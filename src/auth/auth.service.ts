@@ -1,7 +1,6 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { SigninDto } from '../dtos/signin.dto';
-import { AuthorizationDto } from '../dtos/authorization.dto';
+import { SignInReqDto, SignInResDto } from '../dtos/auth.dto';
 import { UserRepository } from '../user/user.repository';
 
 @Injectable()
@@ -11,13 +10,13 @@ export class AuthService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async createAccessToken(username: string): Promise<AuthorizationDto> {
+  async createAccessToken(username: string): Promise<SignInResDto> {
     return {
       accessToken: await this.jwtService.signAsync({ sub: username }),
     };
   }
 
-  async signIn(user: SigninDto): Promise<AuthorizationDto> {
+  async signIn(user: SignInReqDto): Promise<SignInResDto> {
     try {
       const existingUser = await this.userRepository.findUserByUsername(user.username);
       if (existingUser === null) {

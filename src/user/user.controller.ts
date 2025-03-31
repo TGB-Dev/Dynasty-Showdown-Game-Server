@@ -1,8 +1,16 @@
-import { Controller, Get, Request, UseGuards } from '@nestjs/common';
+import {
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Request,
+  SerializeOptions,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { UserService } from './user.service';
 import { AuthGuard } from '../guards/auth.guard';
-import { User } from '../schemas/user.schema';
 import { AuthRequest } from '../common/interfaces/request.interface';
+import { GetMeResDto } from '../dtos/user.dto';
 
 @Controller('user')
 export class UserController {
@@ -10,7 +18,12 @@ export class UserController {
 
   @Get('me')
   @UseGuards(AuthGuard())
-  getMe(@Request() req: AuthRequest): User {
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: GetMeResDto,
+    excludeExtraneousValues: true,
+  })
+  getMe(@Request() req: AuthRequest): GetMeResDto {
     return req.user;
   }
 }
