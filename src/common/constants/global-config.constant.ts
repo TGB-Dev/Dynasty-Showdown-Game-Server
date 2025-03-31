@@ -5,4 +5,3 @@ export const globalConfigs = {
   serverPort: process.env.SERVER_PORT || 5001,
   jwtSecret: process.env.JWT_SECRET || 'TGBDynastyShowdownGameServerJWTSecret',
 };
-g

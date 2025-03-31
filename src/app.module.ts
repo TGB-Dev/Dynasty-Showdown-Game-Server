@@ -9,7 +9,7 @@ import { AdminModule } from './admin/admin.module';
 import { CdvqModule } from './cdvq/cdvq.module';
 import { MchgModule } from './mchg/mchg.module';
 import { TgoModule } from './tgo/tgo.module';
-import { RokModule } from './rok/rok.module';
+// import { RokModule } from './rok/rok.module';
 
 @Module({
   imports: [
@@ -20,7 +20,7 @@ import { RokModule } from './rok/rok.module';
     CdvqModule,
     MchgModule,
     TgoModule,
-    RokModule,
+    // RokModule,
   ],
   controllers: [AppController],
   providers: [AppService],
