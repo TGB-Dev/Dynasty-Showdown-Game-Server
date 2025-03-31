@@ -6,5 +6,6 @@ import { MchgService } from './mchg.service';
 @Module({
   providers: [MchgGateway, MchgService],
   controllers: [MchgController],
+  exports: [MchgGateway],
 })
 export class MchgModule {}

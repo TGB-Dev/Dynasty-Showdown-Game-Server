@@ -6,5 +6,6 @@ import { TgoService } from './tgo.service';
 @Module({
   providers: [TgoGateway, TgoService],
   controllers: [TgoController],
+  exports: [TgoGateway],
 })
 export class TgoModule {}
