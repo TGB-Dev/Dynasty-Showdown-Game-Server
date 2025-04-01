@@ -5,7 +5,7 @@ import { User } from './schemas/user.schema';
 import { getModelToken } from '@nestjs/mongoose';
 import { UserRole } from './common/enum/roles.enum';
 import { INestApplicationContext } from '@nestjs/common';
-import { RokMatrixState } from './schemas/rokMatrixState';
+import { RokMatrixState } from './schemas/rokMatrixState.schema';
 
 // Ring 0 starts from the center of the matrix
 // And increases as the cell is becoming farther from the center

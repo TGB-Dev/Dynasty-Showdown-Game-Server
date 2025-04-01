@@ -6,6 +6,7 @@ import { Room } from '../common/enum/room.enum';
 import { RokGateway } from '../rok/rok.gateway';
 import { TgoGateway } from '../tgo/tgo.gateway';
 import { MchgGateway } from '../mchg/mchg.gateway';
+import { ApiBearerAuth } from '@nestjs/swagger';
 
 @Controller('admin')
 export class AdminController {
@@ -16,6 +17,7 @@ export class AdminController {
     private readonly rokGateway: RokGateway,
   ) {}
 
+  @ApiBearerAuth()
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Post('start-game/:roomName')
   startGame(@Param('roomName') roomName: string) {

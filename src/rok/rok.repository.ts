@@ -2,7 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { RokStatus } from '../schemas/rokStatus.schema';
 import { Model } from 'mongoose';
-import { RokMatrixState } from '../schemas/rokMatrixState';
+import { RokMatrixState } from '../schemas/rokMatrixState.schema';
+import { RokQuestion } from '../schemas/rokQuestion.schema';
+import { NewQuestionDto } from '../dtos/newQuestion.dto';
+import { UpdateQuestionDto } from '../dtos/updateQuestion.dto';
 
 // NOTE: in this class, the status ID is always 0 because the game play is done sequentially, so there is no need to
 // maintain multiple states.
@@ -12,7 +15,29 @@ export class RokRepository {
   constructor(
     @InjectModel(RokStatus.name) private readonly rokStatusModel: Model<RokStatus>,
     @InjectModel(RokMatrixState.name) private readonly rokMatrixModel: Model<RokMatrixState>,
+    @InjectModel(RokQuestion.name) private readonly rokQuestionModel: Model<RokQuestion>,
   ) {}
+
+  async createQuestion(newQuestion: NewQuestionDto) {
+    const newQuestionModel = new this.rokQuestionModel(newQuestion);
+    return await newQuestionModel.save();
+  }
+
+  async getQuestions() {
+    return await this.rokQuestionModel.find({}).exec();
+  }
+
+  async getQuestionById(id: string) {
+    return await this.rokQuestionModel.findById(id).exec();
+  }
+
+  async updateQuestion(id: string, updates: UpdateQuestionDto) {
+    return await this.rokQuestionModel.findOneAndUpdate({ _id: id }, updates, { new: true }).exec();
+  }
+
+  async deleteQuestion(id: string) {
+    await this.rokQuestionModel.findByIdAndDelete(id, { new: true }).exec();
+  }
 
   async getOwner(cityId: number) {
     return (await this.rokMatrixModel.findOne({ cityId: cityId }).exec())!.owner;
