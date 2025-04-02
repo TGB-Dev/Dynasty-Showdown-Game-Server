@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { User } from '../schemas/user.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 @Injectable()
 export class UserRepository {
@@ -23,5 +23,13 @@ export class UserRepository {
     });
 
     return await newUser.save();
+  }
+
+  increaseScore(user_id: User | mongoose.Types.ObjectId | string, score: number) {
+    return this.userModel.findByIdAndUpdate(user_id, { $inc: { score } }, { new: true });
+  }
+
+  setScore(user_id: User | mongoose.Types.ObjectId | string, score: number) {
+    return this.userModel.findByIdAndUpdate(user_id, { score }, { new: true });
   }
 }
