@@ -5,9 +5,6 @@ export type CdvqQuestionDocument = HydratedDocument<CdvqQuestion>;
 
 @Schema({ timestamps: true })
 export class CdvqQuestion {
-  @Prop({ required: true, unique: true })
-  id: string;
-
   @Prop({ required: true })
   questionText: string;
 
