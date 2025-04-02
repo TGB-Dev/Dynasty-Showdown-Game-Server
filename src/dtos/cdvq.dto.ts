@@ -5,6 +5,7 @@ import {
   IsArray,
   IsEnum,
   IsNotEmpty,
+  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
@@ -43,4 +44,11 @@ export class ManyQuestionDto {
   @ValidateNested({ each: true })
   @Type(() => QuestionDto)
   questions: QuestionDto[];
+}
+
+export class CdvqStartDto {
+  @ApiProperty({ required: true })
+  @IsNumber()
+  @IsNotEmpty()
+  totalTime: number;
 }

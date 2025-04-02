@@ -2,10 +2,10 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { CdvqQuestion } from '../schemas/cdvq/cdvqQuestion.schema';
 import { Model } from 'mongoose';
-import { ManyQuestionDto, QuestionDto } from './dto/Question.dto';
+import { ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
 
 @Injectable()
-export class CdvqRepository {
+export class QuestionRepository {
   constructor(@InjectModel(CdvqQuestion.name) private readonly cdvqQuestionModel: Model<CdvqQuestion>) {}
 
   async createQuestion(questionDTO: QuestionDto): Promise<{ message: string }> {

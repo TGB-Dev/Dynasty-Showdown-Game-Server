@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { CdvqGateway } from './cdvq.gateway';
-import { CdvqService } from './cdvq.service';
-import { CdvqController } from './cdvq.controller';
+import { CdvqCRUDService, CdvqGameService } from './cdvq.service';
+import { CdvqGameController, CdvqQuestionController } from './cdvq.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CdvqQuestion, CdvqQuestionSchema } from '../schemas/cdvq/cdvqQuestion.schema';
 import { CdvqStatus, CdvqStatusSchema } from '../schemas/cdvq/cdvqStatus.schema';
 import { UserModule } from '../user/user.module';
-import { CdvqRepository } from './cdvq.repository';
+import { QuestionRepository } from './cdvq.repository';
 
 @Module({
   imports: [
@@ -22,8 +22,8 @@ import { CdvqRepository } from './cdvq.repository';
     ]),
     UserModule,
   ],
-  controllers: [CdvqController],
-  providers: [CdvqGateway, CdvqService, CdvqRepository],
-  exports: [CdvqGateway, CdvqRepository],
+  controllers: [CdvqQuestionController, CdvqGameController],
+  providers: [CdvqGateway, CdvqCRUDService, QuestionRepository, CdvqGameService],
+  exports: [CdvqGateway, QuestionRepository],
 })
 export class CdvqModule {}

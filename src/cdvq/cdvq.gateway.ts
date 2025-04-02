@@ -18,4 +18,20 @@ export class CdvqGateway {
   sendMessage(message: string) {
     this.server.to(Room.CDVQ).emit('message', message);
   }
+
+  emitTimerUpdate(remainingTime: number) {
+    this.server.emit('timerUpdate', { remainingTime });
+  }
+
+  emitGameEnded() {
+    this.server.emit('gameEnded');
+  }
+
+  emitGamePaused() {
+    this.server.emit('gamePaused');
+  }
+
+  emitGameResumed() {
+    this.server.emit('gameResumed');
+  }
 }

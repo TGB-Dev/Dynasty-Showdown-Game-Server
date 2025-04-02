@@ -9,18 +9,18 @@ import {
   Put,
   UseGuards,
 } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { ManyQuestionDto, QuestionDto } from './dto/Question.dto';
+import { CdvqStartDto, ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
 import { CdvqQuestion } from '../schemas/cdvq/cdvqQuestion.schema';
-import { CdvqService } from './cdvq.service';
+import { CdvqCRUDService, CdvqGameService } from './cdvq.service';
 
-@Controller('cdvq')
-export class CdvqController {
-  constructor(private readonly questionService: CdvqService) {}
+@Controller('cdvq/questions')
+export class CdvqQuestionController {
+  constructor(private readonly questionService: CdvqCRUDService) {}
 
-  @Post('/question/create')
+  @Post('/create')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Create a new question' })
   @ApiResponse({ status: 201, description: 'Question created successfully' })
@@ -34,7 +34,7 @@ export class CdvqController {
     }
   }
 
-  @Post('/question/createmany')
+  @Post('/createmany')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Create multiple questions' })
   @ApiResponse({ status: 201, description: 'Questions created successfully' })
@@ -48,7 +48,7 @@ export class CdvqController {
     }
   }
 
-  @Delete('/question/delete/:id')
+  @Delete('/delete/:id')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Delete a question by ID' })
   @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
@@ -63,7 +63,7 @@ export class CdvqController {
     }
   }
 
-  @Put('/question/update/:id')
+  @Put('/update/:id')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Update a question by ID' })
   @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
@@ -79,7 +79,8 @@ export class CdvqController {
     }
   }
 
-  @Get('/questions')
+  @Get()
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Get all questions' })
   @ApiResponse({ status: 200, description: 'Returns list of questions', type: [CdvqQuestion] })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
@@ -89,5 +90,47 @@ export class CdvqController {
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
+  }
+}
+
+@Controller('cdvq/game')
+export class CdvqGameController {
+  constructor(private readonly gameService: CdvqGameService) {}
+
+  @Post('start')
+  @ApiOperation({ summary: 'Start game' })
+  @ApiParam({ name: 'time', required: true, description: 'Total time of game' })
+  @ApiResponse({ status: 200, description: 'Game started successfully' })
+  @ApiResponse({ status: 400, description: 'Game started failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  startGame(@Body() { totalTime }: CdvqStartDto) {
+    return this.gameService.startGame(totalTime);
+  }
+
+  @Post('pause')
+  @ApiOperation({ summary: 'Pause a game' })
+  @ApiResponse({ status: 200, description: 'Game paused successfully' })
+  @ApiResponse({ status: 400, description: 'Game paused failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  pauseGame() {
+    return this.gameService.pauseGame();
+  }
+
+  @Post('resume')
+  @ApiOperation({ summary: 'Resume a game' })
+  @ApiResponse({ status: 200, description: 'Game resumed successfully' })
+  @ApiResponse({ status: 400, description: 'Game resumed failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  resumeGame() {
+    return this.gameService.resumeGame();
+  }
+
+  @Post('end')
+  @ApiOperation({ summary: 'End game' })
+  @ApiResponse({ status: 200, description: 'Game ended successfully' })
+  @ApiResponse({ status: 400, description: 'Game ended failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  endGame() {
+    return this.gameService.endGame();
   }
 }
