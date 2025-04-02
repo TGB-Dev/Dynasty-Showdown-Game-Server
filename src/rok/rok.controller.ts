@@ -1,11 +1,14 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards } from '@nestjs/common';
 import { RokService } from './rok.service';
-import { NewQuestionDto } from '../dtos/newQuestion.dto';
-import { UpdateQuestionDto } from '../dtos/updateQuestion.dto';
+import { NewRokQuestionDto } from '../dtos/newRokQuestion.dto';
+import { UpdateRokQuestionDto } from '../dtos/updateRokQuestion.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
 import { RokRepository } from './rok.repository';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { RokAnswerQuestionDto } from '../dtos/rokAnswerQuestion.dto';
+import { AuthRequest } from '../common/interfaces/request.interface';
+import { RokGateway } from './rok.gateway';
 
 @ApiBearerAuth()
 @Controller('rok')
@@ -13,47 +16,64 @@ export class RokController {
   constructor(
     private readonly rokService: RokService,
     private readonly rokRepository: RokRepository,
+    private readonly rokGateway: RokGateway,
   ) {}
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  @Get('start')
-  startGame() {}
+  @Get('game/resume')
+  async resumeGame() {
+    return await this.rokService.resumeGame();
+  }
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  @Get('stop')
-  stopGame() {}
+  @Get('game/run')
+  runRound() {
+    return this.rokService.runGame();
+  }
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  @Get('startRound')
-  startRound() {}
+  @Get('game/pause')
+  pauseGame() {
+    return this.rokService.pauseGame();
+  }
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  @Get('stopRound')
-  stopRound() {}
+  @Get('timer/start/:duration')
+  async startTimer(@Param('duration') durationInSeconds: number) {
+    await this.rokService.startTimer(durationInSeconds, (rem) => this.rokGateway.updateTimer(rem));
+  }
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  @Get('startTimer')
-  startTimer() {}
-
-  @UseGuards(AuthGuard(UserRole.ADMIN))
-  @Get('stopTimer')
-  stopTimer() {}
+  @Get('timer/stop')
+  stopTimer() {
+    return this.rokService.stopTimer();
+  }
 
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Get('claimCity')
-  claimCity() {}
+  @Get('attack/create/:cityId')
+  async createAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
+    await this.rokRepository.createAttack(req.user.username, cityId);
+  }
 
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Get('unclaimCity')
-  unclaimCity() {}
+  @Get('attack/remove/:cityId')
+  async deleteAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
+    await this.rokRepository.deleteAttack(req.user.username, cityId);
+  }
 
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Get('attackCity')
-  attackCity() {}
+  @Get('questions/answer/:questionId')
+  async answerQuestion(
+    @Param('questionId') questionId: string,
+    @Request() req: AuthRequest,
+    @Body() dto: RokAnswerQuestionDto,
+  ) {
+    await this.rokService.answerQuestion(questionId, req.user.username, dto);
+  }
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Post('questions/create')
-  async createQuestion(@Body() newQuestion: NewQuestionDto) {
+  async createQuestion(@Body() newQuestion: NewRokQuestionDto) {
     return await this.rokRepository.createQuestion(newQuestion);
   }
 
@@ -71,7 +91,7 @@ export class RokController {
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Put('questions/:id')
-  async updateQuestion(@Param('id') id: string, @Body() updates: UpdateQuestionDto) {
+  async updateQuestion(@Param('id') id: string, @Body() updates: UpdateRokQuestionDto) {
     return await this.rokRepository.updateQuestion(id, updates);
   }
 

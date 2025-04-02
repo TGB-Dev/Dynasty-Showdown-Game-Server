@@ -21,6 +21,9 @@ export class RokQuestion {
 
   @Prop()
   correctChoiceIndex: number;
+
+  @Prop()
+  selected: boolean;
 }
 
 export const RokQuestionSchema = SchemaFactory.createForClass(RokQuestion);

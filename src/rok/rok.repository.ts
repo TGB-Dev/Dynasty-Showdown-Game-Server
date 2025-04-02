@@ -1,24 +1,49 @@
-import { Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { RokStatus } from '../schemas/rokStatus.schema';
+import { RokAttack } from '../schemas/rokAttack.schema';
 import { Model } from 'mongoose';
 import { RokMatrixState } from '../schemas/rokMatrixState.schema';
 import { RokQuestion } from '../schemas/rokQuestion.schema';
-import { NewQuestionDto } from '../dtos/newQuestion.dto';
-import { UpdateQuestionDto } from '../dtos/updateQuestion.dto';
-
-// NOTE: in this class, the status ID is always 0 because the game play is done sequentially, so there is no need to
-// maintain multiple states.
+import { NewRokQuestionDto } from '../dtos/newRokQuestion.dto';
+import { UpdateRokQuestionDto } from '../dtos/updateRokQuestion.dto';
+import { UserRepository } from '../user/user.repository';
 
 @Injectable()
 export class RokRepository {
   constructor(
-    @InjectModel(RokStatus.name) private readonly rokStatusModel: Model<RokStatus>,
+    @InjectModel(RokAttack.name) private readonly rokAttackModel: Model<RokAttack>,
     @InjectModel(RokMatrixState.name) private readonly rokMatrixModel: Model<RokMatrixState>,
     @InjectModel(RokQuestion.name) private readonly rokQuestionModel: Model<RokQuestion>,
+    private readonly userRepository: UserRepository,
   ) {}
 
-  async createQuestion(newQuestion: NewQuestionDto) {
+  private readonly bfsDirections = [-1, +1, -9, +9];
+
+  async bfs(cityId: number, teamUsername: string) {
+    const q = [{ cityId: cityId, cnt: 1 }];
+    while (q.length > 0) {
+      const curr = q.shift()!;
+
+      if (curr.cnt === 4) {
+        return true;
+      }
+
+      for (const direction of this.bfsDirections) {
+        const newCityId = curr.cityId + direction;
+        if (0 <= newCityId && newCityId < 81 && (await this.getCityOwner(newCityId)) === teamUsername) {
+          q.push({ cityId: newCityId, cnt: curr.cnt + 1 });
+        }
+      }
+    }
+
+    return false;
+  }
+
+  async getCityOwner(cityId: number) {
+    return (await this.rokMatrixModel.findOne({ cityId: cityId }).exec())!.owner;
+  }
+
+  async createQuestion(newQuestion: NewRokQuestionDto) {
     const newQuestionModel = new this.rokQuestionModel(newQuestion);
     return await newQuestionModel.save();
   }
@@ -31,7 +56,7 @@ export class RokRepository {
     return await this.rokQuestionModel.findById(id).exec();
   }
 
-  async updateQuestion(id: string, updates: UpdateQuestionDto) {
+  async updateQuestion(id: string, updates: UpdateRokQuestionDto) {
     return await this.rokQuestionModel.findOneAndUpdate({ _id: id }, updates, { new: true }).exec();
   }
 
@@ -39,63 +64,83 @@ export class RokRepository {
     await this.rokQuestionModel.findByIdAndDelete(id, { new: true }).exec();
   }
 
-  async getOwner(cityId: number) {
-    return (await this.rokMatrixModel.findOne({ cityId: cityId }).exec())!.owner;
-  }
-
-  async updateState(attackTeamUsername: string, cityId: number) {
-    // Query the current owner of the current city
-    // The city is guaranteed to be existed
-    const currentOwner = await this.getOwner(cityId);
-
-    return await this.rokStatusModel
-      .findOneAndUpdate(
-        { cityId: cityId },
-        {
-          attackTeam: attackTeamUsername,
-          defendTeam: currentOwner,
-          cityId: cityId,
-        },
-      )
-      .exec();
-  }
-
-  // Return true when successfully updated
-  async claimCity(teamUsername: string, cityId: number) {
-    const updatedCity = await this.rokMatrixModel
-      .findOneAndUpdate(
-        { cityId: cityId, owner: undefined },
-        {
-          owner: teamUsername,
-        },
-        {
-          new: true,
-        },
-      )
-      .exec();
-
-    if (!updatedCity) {
-      return false;
+  async getRandomQuestion() {
+    let ok = false;
+    let selectedQuestion: RokQuestion | null = null;
+    while (!ok) {
+      const fetchedQuestion = await this.rokQuestionModel.aggregate([{ $sample: { size: 1 } }]).exec();
+      selectedQuestion = await this.rokQuestionModel
+        .findOneAndUpdate(
+          {
+            // @ts-expect-error The aggregation pipeline doesn't recognize the document's type
+            _id: fetchedQuestion._id,
+            selected: false,
+          },
+          { selected: true },
+          { new: true },
+        )
+        .exec();
+      ok = selectedQuestion !== null;
     }
-    return true;
+
+    return selectedQuestion!;
   }
 
-  async unclaimCity(teamUsername: string, cityId: number) {
-    const updatedCity = await this.rokMatrixModel
-      .findOneAndUpdate(
-        {
-          cityId: cityId,
-          owner: teamUsername,
-        },
-        { owner: undefined },
-        { new: true },
-      )
-      .exec();
+  async getAttacks() {
+    return await this.rokAttackModel.find({}).exec();
+  }
 
-    if (!updatedCity) {
-      return false;
+  async getAttackingTeams() {
+    const teams = (await this.getAttacks()).map((value) => value.attackTeam);
+    return [...new Set(teams)];
+  }
+
+  async createAttack(teamUsername: string, cityId: number) {
+    const newAttack = new this.rokAttackModel({
+      attackTeam: teamUsername,
+      cityId: cityId,
+    });
+
+    await newAttack.save();
+  }
+
+  async deleteAttack(teamUsername: string, cityId: number) {
+    await this.rokAttackModel.findOneAndDelete({ cityId: cityId, attackTeam: teamUsername }).exec();
+  }
+
+  // Delete attacks from `teamUsername`
+  async deleteAttacksOnIncorrectAnswer(teamUsername: string) {
+    await this.rokAttackModel.deleteMany({ attackTeam: teamUsername }).exec();
+  }
+
+  // Delete attacks from other teams to cities owned by `teamUsername`
+  async defendOnCorrectAnswer(teamUsername: string) {
+    const cities = await this.rokMatrixModel.find({ owner: teamUsername }).exec();
+    for (const city of cities) {
+      await this.rokAttackModel.findOneAndDelete({ cityId: city.cityId }).exec();
     }
-    return true;
+  }
+
+  // Mark attacks as answered (success)
+  async markAttackAsSucceeded(teamUsername: string) {
+    await this.rokAttackModel.findOneAndUpdate({ attackTeam: teamUsername }, { answered: true }).exec();
+  }
+
+  async updateOwnerships() {
+    // Remove unanswered attacks
+    await this.rokAttackModel.deleteMany({ answered: false }).exec();
+
+    const attacks = await this.rokAttackModel.find({}).exec();
+    for (const attack of attacks) {
+      const updatedCity = await this.rokMatrixModel
+        .findOneAndUpdate({ cityId: attack.cityId }, { owner: attack.attackTeam }, { new: true })
+        .exec();
+      if (!updatedCity) {
+        throw new ConflictException(
+          `Failed to update the ownership of city ${attack.cityId} to "${attack.attackTeam}"`,
+        );
+      }
+    }
   }
 
   async recalculatePoints() {
@@ -109,9 +154,26 @@ export class RokRepository {
         points[c.owner] += c.points;
       }
     });
+
+    // Bonus points if there is any area of 4 adjacent cities
+    const teams = await this.userRepository.getTeams();
+    for (const team of teams) {
+      const cities = await this.rokMatrixModel.find({ owner: team }).exec();
+      for (const city of cities) {
+        if (await this.bfs(city.cityId, team)) {
+          points[team] += 100;
+          break;
+        }
+      }
+    }
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [k, v] of Object.entries(points)) {
       // TODO: Update the points of teamName `k` an amount of `v`
     }
+  }
+
+  async getMatrix() {
+    return await this.rokMatrixModel.find({}).exec();
   }
 }

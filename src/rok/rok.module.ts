@@ -4,7 +4,7 @@ import { RokController } from './rok.controller';
 import { RokService } from './rok.service';
 import { MongooseModule } from '@nestjs/mongoose';
 import { RokMatrixState, RokMatrixStateSchema } from '../schemas/rokMatrixState.schema';
-import { RokStatus, RokStatusSchema } from '../schemas/rokStatus.schema';
+import { RokAttack, RokAttackSchema } from '../schemas/rokAttack.schema';
 import { RokRepository } from './rok.repository';
 import { RokQuestion, RokQuestionSchema } from '../schemas/rokQuestion.schema';
 import { UserModule } from '../user/user.module';
@@ -13,7 +13,7 @@ import { UserModule } from '../user/user.module';
   imports: [
     UserModule,
     MongooseModule.forFeature([
-      { name: RokStatus.name, schema: RokStatusSchema },
+      { name: RokAttack.name, schema: RokAttackSchema },
       {
         name: RokMatrixState.name,
         schema: RokMatrixStateSchema,
@@ -24,7 +24,7 @@ import { UserModule } from '../user/user.module';
       },
     ]),
   ],
-  providers: [RokGateway, RokService, RokRepository],
+  providers: [RokGateway, RokRepository, RokService],
   controllers: [RokController],
   exports: [RokRepository, RokGateway],
 })

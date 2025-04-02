@@ -24,4 +24,8 @@ export class UserRepository {
 
     return await newUser.save();
   }
+
+  async getTeams() {
+    return (await this.userModel.find({}, 'username').exec()).map((user) => user.username);
+  }
 }
