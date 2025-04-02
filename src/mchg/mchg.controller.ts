@@ -1,13 +1,30 @@
-import { Body, Controller, Post, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MchgImageValidationPipe } from './mchg.pipe';
-import { CreateRoundReqDto, CreateRoundResDto } from '../dtos/mchg.dto';
+import {
+  CreateRoundReqDto,
+  CreateRoundResDto,
+  GetAllRoundsResDto,
+  GetCurrentRoundResDto,
+  SubmitAnswerReqDto,
+} from '../dtos/mchg.dto';
 import { MchgService } from './mchg.service';
 import { diskStorage } from 'multer';
 import { globalConfigs } from '../common/constants/global-config.constant';
-import { ApiBearerAuth, ApiConsumes, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiConsumes,
+  ApiCreatedResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
+import { User } from '../schemas/user.schema';
+import { AuthRequest } from '../common/interfaces/request.interface';
 
 @ApiTags('Mật chiếu hoàng gia')
 @ApiBearerAuth()
@@ -15,12 +32,20 @@ import { UserRole } from '../common/enum/roles.enum';
 export class MchgController {
   constructor(private readonly mchgService: MchgService) {}
 
+  @Post('start')
+  @ApiOperation({ summary: 'Start the game' })
+  @ApiOkResponse({ description: 'Game started' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  startGame() {
+    this.mchgService.startGame();
+  }
+
   @Post('rounds')
   @ApiOperation({ summary: 'Create a compete round' })
   @ApiConsumes('multipart/form-data')
-  @ApiResponse({ status: 201, type: CreateRoundResDto })
-  @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiCreatedResponse({ type: CreateRoundResDto })
+  @ApiBadRequestResponse({ description: 'Bad request' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @UseInterceptors(
     FileInterceptor('image', {
@@ -38,5 +63,32 @@ export class MchgController {
     @Body() body: CreateRoundReqDto,
   ): Promise<CreateRoundResDto> {
     return this.mchgService.createRound({ ...body, image });
+  }
+
+  @Get('rounds')
+  @ApiOperation({ summary: 'Get all compete rounds' })
+  @ApiOkResponse({ type: [GetAllRoundsResDto] })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  getAllRounds(): Promise<GetAllRoundsResDto[]> {
+    return this.mchgService.getAllRounds();
+  }
+
+  @Get('rounds/current')
+  @ApiOperation({ summary: 'Get the current compete round' })
+  @ApiCreatedResponse({ type: GetAllRoundsResDto })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @UseGuards(AuthGuard(UserRole.ADMIN, UserRole.PLAYER))
+  getCurrentRound(): Promise<GetCurrentRoundResDto> {
+    return this.mchgService.getCurrentRound();
+  }
+
+  @Post('answer')
+  @ApiOperation({ summary: 'Submit answer for the current round' })
+  @ApiCreatedResponse({ description: 'Answer submitted' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  async submitAnswer(@Body() { answer }: SubmitAnswerReqDto, @Req() { user }: AuthRequest) {
+    await this.mchgService.submitAnswer(answer, user);
   }
 }

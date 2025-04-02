@@ -4,7 +4,7 @@ import { MchgRound } from '../schemas/mchg/mchgRound.schema';
 import mongoose, { Model } from 'mongoose';
 
 @Injectable()
-export class MchgRepository {
+export class MchgRoundRepository {
   constructor(@InjectModel(MchgRound.name) private readonly mchgRoundModel: Model<MchgRound>) {}
 
   create(roundDto: any): Promise<MchgRound> {

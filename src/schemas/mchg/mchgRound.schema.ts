@@ -5,6 +5,7 @@ import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMaxSize, ArrayMinSize, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { BaseModel } from '../base.schema';
+import mongoose from 'mongoose';
 
 @Schema()
 export class MchgRound extends BaseModel {
@@ -18,8 +19,12 @@ export class MchgRound extends BaseModel {
   @ArrayMaxSize(6)
   @ValidateNested({ each: true })
   @Type(() => MchgQuestion)
-  @Prop({ type: [MchgQuestionSchema], required: true })
+  @Prop({ type: [mongoose.Types.ObjectId], required: true })
   questions: MchgQuestion[];
+
+  @ApiProperty({ description: "Round's current question index" })
+  @Prop({ required: true })
+  questionIndex: number;
 
   @ApiProperty({ description: "Round's order index" })
   @Prop({ required: true })
