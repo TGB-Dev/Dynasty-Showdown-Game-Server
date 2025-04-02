@@ -10,7 +10,7 @@ async function bootstrap() {
 
   const userModel = app.get<Model<User>>(getModelToken(User.name));
 
-  const seedUsers: User[] = [
+  const seedUsers: any[] = [
     {
       username: 'admin',
       password: 'admin',
