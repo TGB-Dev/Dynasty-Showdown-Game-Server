@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { MchgImage, MchgImageSchema } from './mchgImage.schema';
-import { MchgQuestion, MchgQuestionSchema } from './mchgQuestion.schema';
+import { MchgQuestion } from './mchgQuestion.schema';
 import { ApiProperty } from '@nestjs/swagger';
 import { ArrayMaxSize, ArrayMinSize, IsArray, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';

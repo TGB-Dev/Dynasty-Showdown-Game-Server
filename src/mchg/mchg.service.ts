@@ -54,8 +54,6 @@ export class MchgService {
   async submitAnswer(answer: string, user: User) {
     const currentQuestion = await this.getCurrentQuestion();
 
-    console.log(currentQuestion);
-
     const submission: MchgSubmission = {
       question: currentQuestion,
       answer,

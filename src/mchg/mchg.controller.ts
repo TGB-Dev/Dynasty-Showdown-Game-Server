@@ -23,7 +23,6 @@ import {
 } from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { User } from '../schemas/user.schema';
 import { AuthRequest } from '../common/interfaces/request.interface';
 
 @ApiTags('Mật chiếu hoàng gia')
