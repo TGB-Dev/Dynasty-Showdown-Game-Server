@@ -20,7 +20,7 @@ import { CdvqService } from './cdvq.service';
 export class CdvqController {
   constructor(private readonly questionService: CdvqService) {}
 
-  @Post('/create')
+  @Post('/question/create')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Create a new question' })
   @ApiResponse({ status: 201, description: 'Question created successfully' })
@@ -34,7 +34,7 @@ export class CdvqController {
     }
   }
 
-  @Post('/createmany')
+  @Post('/question/createmany')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Create multiple questions' })
   @ApiResponse({ status: 201, description: 'Questions created successfully' })
@@ -48,7 +48,7 @@ export class CdvqController {
     }
   }
 
-  @Delete('/delete/:id')
+  @Delete('/question/delete/:id')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Delete a question by ID' })
   @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
@@ -63,7 +63,7 @@ export class CdvqController {
     }
   }
 
-  @Put('/update/:id')
+  @Put('/question/update/:id')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Update a question by ID' })
   @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
@@ -79,7 +79,7 @@ export class CdvqController {
     }
   }
 
-  @Get()
+  @Get('/questions')
   @ApiOperation({ summary: 'Get all questions' })
   @ApiResponse({ status: 200, description: 'Returns list of questions', type: [CdvqQuestion] })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
