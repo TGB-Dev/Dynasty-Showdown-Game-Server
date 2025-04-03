@@ -1,10 +1,9 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { MchgRoundRepository } from './mchg-round.repository';
 import { CreateRoundReqDto } from '../dtos/mchg.dto';
-import { MchgRound } from '../schemas/mchg/mchgRound.schema';
-import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
 import { User } from '../schemas/user.schema';
 import { MchgSubmissionRepository } from './mchg-submission.repository';
+import { MchgQuestionRepository } from './mchg-question.repository';
 
 @Injectable()
 export class MchgService {
@@ -13,20 +12,22 @@ export class MchgService {
   constructor(
     private readonly mchgRoundRepository: MchgRoundRepository,
     private readonly mchgSubmissionRepository: MchgSubmissionRepository,
+    private readonly mchgQuestionRepository: MchgQuestionRepository,
   ) {}
 
-  createRound(roundDto: Omit<CreateRoundReqDto, 'image'> & { image: Express.Multer.File }) {
+  async createRound(roundDto: Omit<CreateRoundReqDto, 'image'> & { image: Express.Multer.File }) {
     const image = roundDto.image;
 
-    const roundObject: MchgRound = {
-      ...roundDto,
+    const round = {
+      questions: await Promise.all(roundDto.questions.map((question) => this.mchgQuestionRepository.create(question))),
+      order: roundDto.order,
       questionIndex: 0,
       image: {
         name: image.filename,
       },
     };
 
-    return this.mchgRoundRepository.create(roundObject);
+    return this.mchgRoundRepository.create(round);
   }
 
   getAllRounds() {
@@ -35,7 +36,7 @@ export class MchgService {
 
   getCurrentRound() {
     if (this.roundIndex === null) {
-      throw new BadRequestException('Game not started yet');
+      throw new BadRequestException('Game is not running');
     }
 
     return this.mchgRoundRepository.getByOrder(this.roundIndex);
@@ -47,14 +48,14 @@ export class MchgService {
     return currentRound.questions[currentRound.questionIndex];
   }
 
-  startGame() {
+  runGame() {
     this.roundIndex = 0;
   }
 
   async submitAnswer(answer: string, user: User) {
     const currentQuestion = await this.getCurrentQuestion();
 
-    const submission: MchgSubmission = {
+    const submission = {
       question: currentQuestion,
       answer,
       user,

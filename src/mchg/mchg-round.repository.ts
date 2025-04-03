@@ -7,8 +7,8 @@ import { Model } from 'mongoose';
 export class MchgRoundRepository {
   constructor(@InjectModel(MchgRound.name) private readonly mchgRoundModel: Model<MchgRound>) {}
 
-  create(roundDto: any): Promise<MchgRound> {
-    const newRound = new this.mchgRoundModel(roundDto);
+  create(round: any): Promise<MchgRound> {
+    const newRound = new this.mchgRoundModel(round);
     return newRound.save();
   }
 

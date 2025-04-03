@@ -19,7 +19,7 @@ export class MchgRound extends BaseModel {
   @ArrayMaxSize(6)
   @ValidateNested({ each: true })
   @Type(() => MchgQuestion)
-  @Prop({ type: [mongoose.Types.ObjectId], required: true })
+  @Prop({ type: [{ type: mongoose.Types.ObjectId, ref: MchgQuestion.name }], required: true })
   questions: MchgQuestion[];
 
   @ApiProperty({ description: "Round's current question index" })
