@@ -8,14 +8,15 @@ import { UserRepository } from '../user/user.repository';
 @Injectable()
 export class RokService implements OnModuleDestroy {
   private remainingTime = 0;
-  private timerIsRunning: boolean = false;
   private interval: NodeJS.Timeout | null = null;
   private lastStage: RokStage = RokStage.PAUSED;
-  private currentStage: RokStage = RokStage.CHOOSE_CITY;
   private roundCount: number = 10;
   private currentRound: number = 1;
+  timerIsRunning: boolean = false;
+  currentStage: RokStage = RokStage.CHOOSE_CITY;
 
   constructor(
+    @Inject(forwardRef(() => RokRepository))
     private readonly rokRepository: RokRepository,
     @Inject(forwardRef(() => RokGateway))
     private readonly rokGateway: RokGateway,

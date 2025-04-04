@@ -73,6 +73,11 @@ export class RokGateway implements OnGatewayConnection {
     this.server.to(Room.ROK).emit('updateMatrix', matrix);
   }
 
+  async updateAttacks() {
+    const attacks = await this.rokRepository.getAttacks();
+    this.server.to(Room.ROK).emit('updateAttacks', attacks);
+  }
+
   sendQuestion(teamUsername: string, question: SendRokQuestionDto) {
     this.server.to(teamUsername).emit('sendQuestion', question);
   }
