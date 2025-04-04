@@ -3,6 +3,7 @@ import {
   ArrayMaxSize,
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsEnum,
   IsNotEmpty,
   IsNumber,
@@ -51,4 +52,58 @@ export class CdvqStartDto {
   @IsNumber()
   @IsNotEmpty()
   totalTime: number;
+}
+
+export class CdvqAnswerDto {
+  @ApiProperty({ required: true })
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
+  @ApiProperty({ required: true })
+  @IsString()
+  @IsNotEmpty()
+  answer: string;
+}
+
+export class CdvqScoreRecordDto {
+  @ApiProperty({ required: true })
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
+  @ApiProperty({ required: true })
+  @IsString()
+  @IsNotEmpty()
+  questionId: string;
+  @ApiProperty({ required: true })
+  @IsNumber()
+  @IsNotEmpty()
+  roundNumber: number;
+
+  @ApiProperty({ required: true })
+  @IsBoolean()
+  @IsNotEmpty()
+  isCorrect: boolean;
+
+  @ApiProperty({ required: true })
+  @IsNumber()
+  answerTime: number;
+}
+
+export class CdvqTeamsResultsDto {
+  @ApiProperty({ required: true })
+  @IsString()
+  @IsNotEmpty()
+  username: string;
+
+  @ApiProperty({ required: true })
+  @IsNumber()
+  @IsNotEmpty()
+  answerTime: number;
+
+  @ApiProperty({ required: true })
+  @IsBoolean()
+  @IsNotEmpty()
+  isCorrect: boolean;
 }

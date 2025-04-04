@@ -12,11 +12,12 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { CdvqStartDto, ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
+import { CdvqAnswerDto, CdvqStartDto, ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
 import { CdvqQuestion } from '../schemas/cdvq/cdvqQuestion.schema';
 import { CdvqCRUDService, CdvqGameService } from './cdvq.service';
+import { CdvqScoreRecord } from '../schemas/cdvq/cdvqScoreRecord.schema';
 
-@Controller('cdvq/questions')
+@Controller('cdvq/question')
 export class CdvqQuestionController {
   constructor(private readonly questionService: CdvqCRUDService) {}
 
@@ -79,7 +80,7 @@ export class CdvqQuestionController {
     }
   }
 
-  @Get()
+  @Get('/all')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Get all questions' })
   @ApiResponse({ status: 200, description: 'Returns list of questions', type: [CdvqQuestion] })
@@ -103,8 +104,13 @@ export class CdvqGameController {
   @ApiResponse({ status: 200, description: 'Game started successfully' })
   @ApiResponse({ status: 400, description: 'Game started failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   startGame(@Body() { totalTime }: CdvqStartDto) {
-    return this.gameService.startGame(totalTime);
+    try {
+      return this.gameService.startGame(totalTime);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   @Post('pause')
@@ -112,8 +118,13 @@ export class CdvqGameController {
   @ApiResponse({ status: 200, description: 'Game paused successfully' })
   @ApiResponse({ status: 400, description: 'Game paused failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   pauseGame() {
-    return this.gameService.pauseGame();
+    try {
+      return this.gameService.pauseGame();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   @Post('resume')
@@ -121,8 +132,13 @@ export class CdvqGameController {
   @ApiResponse({ status: 200, description: 'Game resumed successfully' })
   @ApiResponse({ status: 400, description: 'Game resumed failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   resumeGame() {
-    return this.gameService.resumeGame();
+    try {
+      return this.gameService.resumeGame();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 
   @Post('end')
@@ -130,7 +146,44 @@ export class CdvqGameController {
   @ApiResponse({ status: 200, description: 'Game ended successfully' })
   @ApiResponse({ status: 400, description: 'Game ended failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   endGame() {
-    return this.gameService.endGame();
+    try {
+      return this.gameService.endGame();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  @Get('result')
+  @ApiOperation({ summary: 'Get game result' })
+  @ApiResponse({ status: 200, description: 'Game result retrieved successfully' })
+  @ApiResponse({ status: 400, description: 'Game result retrieval failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  async sendGameResult(): Promise<CdvqScoreRecord[]> {
+    try {
+      return await this.gameService.sendResult();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+}
+
+@Controller('cdvq/answer')
+export class CdvqAnswerController {
+  constructor(private readonly gameService: CdvqGameService) {}
+
+  @Post('submit')
+  @ApiOperation({ summary: 'Submit answer' })
+  @ApiResponse({ status: 200, description: 'Answer submitted successfully' })
+  @ApiResponse({ status: 400, description: 'Answer submission failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async submit_answer(@Body() answerData: CdvqAnswerDto): Promise<{ message: string }> {
+    try {
+      return await this.gameService.submit_answer(answerData);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
   }
 }

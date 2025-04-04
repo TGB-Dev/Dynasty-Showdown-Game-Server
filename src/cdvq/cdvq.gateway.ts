@@ -1,6 +1,7 @@
 import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Room } from '../common/enum/room.enum';
+import { CdvqTeamsResultsDto } from '../dtos/cdvq.dto';
 
 @WebSocketGateway()
 export class CdvqGateway {
@@ -33,5 +34,21 @@ export class CdvqGateway {
 
   emitGameResumed() {
     this.server.emit('gameResumed');
+  }
+
+  emitQuestion(question: string) {
+    this.server.emit('question', question);
+  }
+
+  emitAnsweredQuestion(answer: string) {
+    this.server.emit('answer', answer);
+  }
+
+  emitResult(result: CdvqTeamsResultsDto[]) {
+    this.server.emit('result', result);
+  }
+
+  emitReadyTimer(remainingTime: number) {
+    this.server.emit('readyTimer', { remainingTime });
   }
 }

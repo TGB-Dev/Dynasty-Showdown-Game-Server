@@ -8,7 +8,7 @@ import { Room } from '../common/enum/room.enum';
 export class AdminController {
   constructor(private readonly cdvqGateway: CdvqGateway) {}
 
-  // @UseGuards(AuthGuard(UserRole.ADMIN))
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   @Post('start-game/:roomName')
   startGame(@Param('roomName') roomName: string) {
     if (roomName === Room.CDVQ.toString()) {
