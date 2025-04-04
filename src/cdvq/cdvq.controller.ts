@@ -155,7 +155,7 @@ export class CdvqGameController {
     }
   }
 
-  @Get('result')
+  @Post('send-result')
   @ApiOperation({ summary: 'Get game result' })
   @ApiResponse({ status: 200, description: 'Game result retrieved successfully' })
   @ApiResponse({ status: 400, description: 'Game result retrieval failed' })
@@ -179,6 +179,7 @@ export class CdvqAnswerController {
   @ApiResponse({ status: 200, description: 'Answer submitted successfully' })
   @ApiResponse({ status: 400, description: 'Answer submission failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.PLAYER))
   async submit_answer(@Body() answerData: CdvqAnswerDto): Promise<{ message: string }> {
     try {
       return await this.gameService.submit_answer(answerData);
