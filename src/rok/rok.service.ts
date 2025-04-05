@@ -11,7 +11,7 @@ export class RokService implements OnModuleDestroy {
   private interval: NodeJS.Timeout | null = null;
   private lastStage: RokStage = RokStage.PAUSED;
   private roundCount: number = 10;
-  private currentRound: number = 1;
+  private currentRound: number = 0;
   timerIsRunning: boolean = false;
   currentStage: RokStage = RokStage.CHOOSE_CITY;
 
@@ -42,7 +42,7 @@ export class RokService implements OnModuleDestroy {
   }
 
   async runRound() {
-    if (this.currentRound > this.roundCount) {
+    if (this.currentRound >= this.roundCount) {
       return;
     }
 
