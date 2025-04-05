@@ -11,4 +11,8 @@ export class MchgQuestionRepository {
     const newQuestion = new this.mchgQuestionModel(question);
     return newQuestion.save();
   }
+
+  async getSolvedQuestions() {
+    return await this.mchgQuestionModel.find({ solved: true }).exec();
+  }
 }
