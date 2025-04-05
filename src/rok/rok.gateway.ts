@@ -2,9 +2,9 @@ import { ConnectedSocket, OnGatewayConnection, WebSocketGateway, WebSocketServer
 import { Server, Socket } from 'socket.io';
 import { Room } from '../common/enum/room.enum';
 import { forwardRef, Inject, UnauthorizedException } from '@nestjs/common';
-import { RokStage } from '../common/enum/rokStage.enum';
+import { RokStage } from '../common/enum/rok/rokStage.enum';
 import { RokRepository } from './rok.repository';
-import { SendRokQuestionDto } from '../dtos/sendRokQuestion.dto';
+import { SendRokQuestionDto } from '../dtos/rok/sendRokQuestion.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from '../user/user.repository';
 

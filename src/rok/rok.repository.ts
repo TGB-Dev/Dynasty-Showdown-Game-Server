@@ -1,14 +1,14 @@
 import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { RokAttack } from '../schemas/rokAttack.schema';
+import { RokAttack } from '../schemas/rok/rokAttack.schema';
 import { Model } from 'mongoose';
-import { RokMatrixState } from '../schemas/rokMatrixState.schema';
-import { RokQuestion } from '../schemas/rokQuestion.schema';
-import { NewRokQuestionDto } from '../dtos/newRokQuestion.dto';
-import { UpdateRokQuestionDto } from '../dtos/updateRokQuestion.dto';
+import { RokMatrixState } from '../schemas/rok/rokMatrixState.schema';
+import { RokQuestion } from '../schemas/rok/rokQuestion.schema';
+import { NewRokQuestionDto } from '../dtos/rok/newRokQuestion.dto';
+import { UpdateRokQuestionDto } from '../dtos/rok/updateRokQuestion.dto';
 import { UserRepository } from '../user/user.repository';
 import { RokService } from './rok.service';
-import { RokStage } from '../common/enum/rokStage.enum';
+import { RokStage } from '../common/enum/rok/rokStage.enum';
 import { RokGateway } from './rok.gateway';
 
 @Injectable()

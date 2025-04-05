@@ -1,12 +1,12 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards } from '@nestjs/common';
 import { RokService } from './rok.service';
-import { NewRokQuestionDto } from '../dtos/newRokQuestion.dto';
-import { UpdateRokQuestionDto } from '../dtos/updateRokQuestion.dto';
+import { NewRokQuestionDto } from '../dtos/rok/newRokQuestion.dto';
+import { UpdateRokQuestionDto } from '../dtos/rok/updateRokQuestion.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
 import { RokRepository } from './rok.repository';
 import { ApiBearerAuth } from '@nestjs/swagger';
-import { RokAnswerQuestionDto } from '../dtos/rokAnswerQuestion.dto';
+import { RokAnswerQuestionDto } from '../dtos/rok/rokAnswerQuestion.dto';
 import { AuthRequest } from '../common/interfaces/request.interface';
 import { RokGateway } from './rok.gateway';
 

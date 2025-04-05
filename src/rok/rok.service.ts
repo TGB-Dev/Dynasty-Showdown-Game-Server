@@ -1,8 +1,8 @@
 import { forwardRef, Inject, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
 import { RokRepository } from './rok.repository';
 import { RokGateway } from './rok.gateway';
-import { RokAnswerQuestionDto } from '../dtos/rokAnswerQuestion.dto';
-import { RokStage } from '../common/enum/rokStage.enum';
+import { RokAnswerQuestionDto } from '../dtos/rok/rokAnswerQuestion.dto';
+import { RokStage } from '../common/enum/rok/rokStage.enum';
 import { UserRepository } from '../user/user.repository';
 
 @Injectable()

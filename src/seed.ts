@@ -5,12 +5,12 @@ import { User } from './schemas/user.schema';
 import { getModelToken } from '@nestjs/mongoose';
 import { UserRole } from './common/enum/roles.enum';
 import { INestApplicationContext } from '@nestjs/common';
-import { RokMatrixState } from './schemas/rokMatrixState.schema';
+import { RokMatrixState } from './schemas/rok/rokMatrixState.schema';
 
 // Ring 0 starts from the center of the matrix
 // And increases as the cell is becoming farther from the center
 // prettier-ignore
-const RING_DEPTH = [
+const ROK_RING_DEPTH = [
   4, 4, 4, 4, 4, 4, 4, 4, 4,
   4, 3, 3, 3, 3, 3, 3, 3, 4,
   4, 3, 2, 2, 2, 2, 2, 3, 4,
@@ -67,7 +67,7 @@ async function seedRokMatrix(app: INestApplicationContext) {
 }
 
 function calculatePoints(i: number) {
-  const cellRing = RING_DEPTH[i];
+  const cellRing = ROK_RING_DEPTH[i];
   switch (cellRing) {
     case 4:
       return 10;

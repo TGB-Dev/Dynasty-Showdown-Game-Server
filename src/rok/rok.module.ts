@@ -3,10 +3,10 @@ import { RokGateway } from './rok.gateway';
 import { RokController } from './rok.controller';
 import { RokService } from './rok.service';
 import { MongooseModule } from '@nestjs/mongoose';
-import { RokMatrixState, RokMatrixStateSchema } from '../schemas/rokMatrixState.schema';
-import { RokAttack, RokAttackSchema } from '../schemas/rokAttack.schema';
+import { RokMatrixState, RokMatrixStateSchema } from '../schemas/rok/rokMatrixState.schema';
+import { RokAttack, RokAttackSchema } from '../schemas/rok/rokAttack.schema';
 import { RokRepository } from './rok.repository';
-import { RokQuestion, RokQuestionSchema } from '../schemas/rokQuestion.schema';
+import { RokQuestion, RokQuestionSchema } from '../schemas/rok/rokQuestion.schema';
 import { UserModule } from '../user/user.module';
 
 @Module({
