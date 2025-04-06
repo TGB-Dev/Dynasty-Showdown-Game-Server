@@ -88,17 +88,17 @@ export class CdvqGameService {
     }, 1000);
   }
 
-  async startGame(totalTime: number) {
-    if (totalTime <= 0 || totalTime === null) {
-      throw new Error('Invalid time');
-    }
+  async startGame() {
     if (this.gameState !== 'WAITING' && this.gameState !== 'ENDED') {
       throw new BadRequestException('Game started');
     }
+
+    const roundDuration = 30;
+
     this.gameState = 'WAITING';
     this.startTime = null;
     this.readyTime = 3;
-    this.remainingTime = totalTime;
+    this.remainingTime = roundDuration;
     this.roundNumber++;
     const question = await this.questionRepository.getFirstWaitingQuestion();
     this.currentQuestion = question;

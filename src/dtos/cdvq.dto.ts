@@ -47,12 +47,6 @@ export class ManyQuestionDto {
   questions: QuestionDto[];
 }
 
-export class CdvqStartDto {
-  @ApiProperty({ required: true })
-  @IsNumber()
-  @IsNotEmpty()
-  totalTime: number;
-}
 
 export class CdvqAnswerDto {
   @ApiProperty({ required: true })

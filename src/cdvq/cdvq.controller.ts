@@ -12,7 +12,7 @@ import {
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { CdvqAnswerDto, CdvqStartDto, ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
+import { CdvqAnswerDto, ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
 import { CdvqQuestion } from '../schemas/cdvq/cdvqQuestion.schema';
 import { CdvqCRUDService, CdvqGameService } from './cdvq.service';
 import { CdvqScoreRecord } from '../schemas/cdvq/cdvqScoreRecord.schema';
@@ -105,9 +105,9 @@ export class CdvqGameController {
   @ApiResponse({ status: 400, description: 'Game started failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  startGame(@Body() { totalTime }: CdvqStartDto) {
+  startGame() {
     try {
-      return this.gameService.startGame(totalTime);
+      return this.gameService.startGame();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }
