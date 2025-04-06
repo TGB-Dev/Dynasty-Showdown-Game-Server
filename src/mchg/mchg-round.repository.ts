@@ -13,10 +13,10 @@ export class MchgRoundRepository {
   }
 
   getAll(): Promise<MchgRound[]> {
-    return this.mchgRoundModel.find().exec();
+    return this.mchgRoundModel.find().populate('questions').exec();
   }
 
-  async getByOrder(order: number): Promise<MchgRound> {
-    return (await this.mchgRoundModel.find().sort({ order: 1 }).exec())[order];
+  async getByOrder(order: number) {
+    return (await this.mchgRoundModel.find().populate('questions').sort({ order: 1 }).exec())[order];
   }
 }

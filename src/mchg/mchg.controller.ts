@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Post, Req, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Get,
+  Post,
+  Req,
+  SerializeOptions,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { MchgImageValidationPipe } from './mchg.pipe';
 import {
@@ -24,6 +35,7 @@ import {
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
 import { AuthRequest } from '../common/interfaces/request.interface';
+import { RoleBasedClassSerializer } from '../common/interceptors/role-based-class-serializer';
 
 @ApiTags('Mật chiếu hoàng gia')
 @ApiBearerAuth()
@@ -78,8 +90,12 @@ export class MchgController {
   @ApiCreatedResponse({ type: GetAllRoundsResDto })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN, UserRole.PLAYER))
-  getCurrentRound(): Promise<GetCurrentRoundResDto> {
-    return this.mchgService.getCurrentRound();
+  @UseInterceptors(RoleBasedClassSerializer)
+  @SerializeOptions({
+    type: GetCurrentRoundResDto,
+  })
+  async getCurrentRound(): Promise<GetCurrentRoundResDto> {
+    return await this.mchgService.getCurrentRound();
   }
 
   @Post('answer')

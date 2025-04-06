@@ -94,12 +94,14 @@ export class MchgService implements OnModuleDestroy {
     return this.mchgRoundRepository.getAll();
   }
 
-  getCurrentRound() {
+  async getCurrentRound() {
     if (this.roundIndex === null) {
       throw new BadRequestException('Game is not running');
     }
 
-    return this.mchgRoundRepository.getByOrder(this.roundIndex);
+    const round = await this.mchgRoundRepository.getByOrder(this.roundIndex);
+    const roundPopulated = await round.populate(['questions', 'currentQuestion'] as const);
+    return roundPopulated.toObject();
   }
 
   async getCurrentQuestion() {

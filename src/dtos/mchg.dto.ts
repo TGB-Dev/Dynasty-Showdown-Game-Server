@@ -8,6 +8,13 @@ export class CreateRoundResDto extends MchgRound {}
 
 export class GetAllRoundsResDto extends PickType(MchgRound, ['_id', 'order', 'questions', 'image'] as const) {}
 
-export class GetCurrentRoundResDto extends PickType(MchgRound, ['_id', 'order', 'questions', 'image'] as const) {}
+export class GetCurrentRoundResDto extends PickType(MchgRound, [
+  '_id',
+  'order',
+  'questions',
+  'currentQuestion',
+  'image',
+  'answer',
+] as const) {}
 
 export class SubmitAnswerReqDto extends PickType(MchgSubmission, ['answer'] as const) {}
