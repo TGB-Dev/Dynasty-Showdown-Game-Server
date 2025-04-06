@@ -12,7 +12,15 @@ export class MchgQuestionRepository {
     return newQuestion.save();
   }
 
-  async getSolvedQuestions() {
+  createMany(questions: MchgQuestion[]): Promise<MchgQuestion[]> {
+    return Promise.all(questions.map((question) => this.create(question)));
+  }
+
+  findById(id: string): Promise<MchgQuestion | null> {
+    return this.mchgQuestionModel.findById(id).exec();
+  }
+
+  async getSolved() {
     return await this.mchgQuestionModel.find({ solved: true }).exec();
   }
 }

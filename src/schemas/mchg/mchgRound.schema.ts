@@ -22,13 +22,16 @@ export class MchgRound extends BaseModel {
   @Prop({ type: [{ type: mongoose.Types.ObjectId, ref: MchgQuestion.name }], required: true })
   questions: MchgQuestion[];
 
-  @ApiProperty({ description: "Round's current question index" })
-  @Prop({ required: true })
-  questionIndex: number;
+  @Prop({ type: mongoose.Types.ObjectId, ref: MchgQuestion.name })
+  currentQuestion: string;
 
   @ApiProperty({ description: "Round's order index" })
   @Prop({ required: true })
   order: number;
+
+  @ApiProperty({ description: "Round's main answer" })
+  @Prop({ required: true })
+  answer: string;
 }
 
 export const MchgRoundSchema = SchemaFactory.createForClass(MchgRound);

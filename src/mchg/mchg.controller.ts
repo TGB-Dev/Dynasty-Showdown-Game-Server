@@ -31,12 +31,12 @@ import { AuthRequest } from '../common/interfaces/request.interface';
 export class MchgController {
   constructor(private readonly mchgService: MchgService) {}
 
-  @Post('run')
+  @Post('game/run')
   @ApiOperation({ summary: 'Start the game' })
   @ApiOkResponse({ description: 'Game started' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   runGame() {
-    this.mchgService.runGame();
+    return this.mchgService.runGame();
   }
 
   @Post('rounds')

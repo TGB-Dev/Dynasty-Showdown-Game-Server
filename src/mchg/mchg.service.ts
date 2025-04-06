@@ -80,9 +80,8 @@ export class MchgService implements OnModuleDestroy {
     const image = roundDto.image;
 
     const round = {
-      questions: await Promise.all(roundDto.questions.map((question) => this.mchgQuestionRepository.create(question))),
-      order: roundDto.order,
-      questionIndex: 0,
+      ...roundDto,
+      questions: await this.mchgQuestionRepository.createMany(roundDto.questions),
       image: {
         name: image.filename,
       },
@@ -106,7 +105,7 @@ export class MchgService implements OnModuleDestroy {
   async getCurrentQuestion() {
     const currentRound = await this.getCurrentRound();
 
-    return currentRound.questions[currentRound.questionIndex];
+    return this.mchgQuestionRepository.findById(currentRound.currentQuestion);
   }
 
   async runGame() {
@@ -141,7 +140,7 @@ export class MchgService implements OnModuleDestroy {
 
     if (this.currentStage === MchgStage.UPDATE_RESULTS) {
       this.mchgGateway.updateStage(this.currentStage);
-      this.mchgGateway.updateSolvedQuestions(await this.mchgQuestionRepository.getSolvedQuestions());
+      this.mchgGateway.updateSolvedQuestions(await this.mchgQuestionRepository.getSolved());
 
       this.roundIndex!++;
       this.mchgGateway.updateRound(this.roundIndex!);
@@ -150,6 +149,8 @@ export class MchgService implements OnModuleDestroy {
 
   async submitAnswer(answer: string, user: User) {
     const currentQuestion = await this.getCurrentQuestion();
+
+    if (currentQuestion === null) throw new BadRequestException('No current question');
 
     const submission = {
       question: currentQuestion,

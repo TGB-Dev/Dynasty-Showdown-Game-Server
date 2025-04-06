@@ -22,5 +22,6 @@ import { MchgQuestion, MchgQuestionSchema } from '../schemas/mchg/mchgQuestion.s
   ],
   providers: [MchgGateway, MchgService, MchgRoundRepository, MchgSubmissionRepository, MchgQuestionRepository],
   controllers: [MchgController],
+  exports: [MchgGateway],
 })
 export class MchgModule {}
