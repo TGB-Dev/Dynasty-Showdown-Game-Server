@@ -21,7 +21,7 @@ export class CdvqSubmissionRepository {
   }
 
   getAll(): Promise<CdvqSubmission[]> {
-    return this.cdvqSubmissionModel.find().exec();
+    return this.cdvqSubmissionModel.find().populate('question').exec();
   }
 
   deleteAll() {

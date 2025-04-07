@@ -42,10 +42,12 @@ export class CdvqGameService {
   private roundState = CdvqRoundState.WAITING;
   private currentQuestion: CdvqQuestion | null;
 
-  startGame() {
+  async startGame() {
     if (this.gameState !== CdvqGameState.NOT_PLAYING) {
       throw new BadRequestException('Game already started');
     }
+
+    await this.resetQuestions();
 
     this.gameState = CdvqGameState.PLAYING;
     void (async () => {
@@ -55,8 +57,6 @@ export class CdvqGameService {
   }
 
   private async startRound() {
-    await this.resetQuestions();
-
     this.currentQuestion = (await this.questionRepository.getFirstWaiting())?.toObject() ?? null;
 
     if (this.currentQuestion === null) {
@@ -91,7 +91,11 @@ export class CdvqGameService {
 
   private async checkSubmissionAnswers() {
     const submissions = await this.submissionRepository.getAll();
-    await Promise.all(submissions.map((submission) => this.submissionRepository.updateIsCorrect(submission, true)));
+    await Promise.all(
+      submissions.map((submission) =>
+        this.submissionRepository.updateIsCorrect(submission, submission.answer === submission.question.answer),
+      ),
+    );
   }
 
   private async calculateScore() {
@@ -149,7 +153,7 @@ export class CdvqGameService {
       throw new BadRequestException('No current question available');
     }
 
-    if ((await this.submissionRepository.findByUserId(user._id!)).length)
+    if (await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion._id!))
       throw new BadRequestException('User has already submitted an answer');
 
     const submission = {
