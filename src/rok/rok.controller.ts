@@ -3,11 +3,14 @@ import { RokService } from './rok.service';
 import { NewRokQuestionDto, RokAnswerQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AuthRequest } from '../common/interfaces/request.interface';
 import { RokGateway } from './rok.gateway';
 
 @ApiBearerAuth()
+@ApiResponse({ status: 401, description: 'You are not authorized to do the specified operation.' })
+@ApiResponse({ status: 200, description: 'OK.' })
+@ApiResponse({ status: 500, description: 'Internal Server Error.' })
 @Controller('rok')
 export class RokController {
   constructor(
@@ -15,48 +18,56 @@ export class RokController {
     private readonly rokGateway: RokGateway,
   ) {}
 
+  @ApiOperation({ summary: 'Resume the game.' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('game/resume')
   async resumeGame() {
     return await this.rokService.resumeGame();
   }
 
+  @ApiOperation({ summary: 'Run the game (with a "3 2 1" timer).' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('game/run')
   runRound() {
     return this.rokService.runGame();
   }
 
+  @ApiOperation({ summary: 'Pause the game.' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('game/pause')
   pauseGame() {
     return this.rokService.pauseGame();
   }
 
+  @ApiOperation({ summary: 'Start the internal timer.' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('timer/start/:duration')
   async startTimer(@Param('duration') durationInSeconds: number) {
     await this.rokService.startTimer(durationInSeconds, (rem) => this.rokGateway.updateTimer(rem));
   }
 
+  @ApiOperation({ summary: 'End the internal timer.' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('timer/stop')
   stopTimer() {
     return this.rokService.stopTimer();
   }
 
+  @ApiOperation({ summary: 'Create an attack on `cityId`.' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @Get('attack/create/:cityId')
   async createAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
     await this.rokService.createAttack(req.user.username, cityId);
   }
 
+  @ApiOperation({ summary: 'Delete an attack on `cityId`.' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @Get('attack/remove/:cityId')
   async deleteAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
     await this.rokService.deleteAttack(req.user.username, cityId);
   }
 
+  @ApiOperation({ summary: 'Answer the question with `questionId`.' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @Get('questions/answer/:questionId')
   async answerQuestion(
@@ -67,30 +78,37 @@ export class RokController {
     await this.rokService.answerQuestion(questionId, req.user.username, dto);
   }
 
+  @ApiOperation({ summary: 'Create a new question.' })
+  @ApiResponse({ status: 201, description: 'OK (POST).' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Post('questions/create')
   async createQuestion(@Body() newQuestion: NewRokQuestionDto) {
     return await this.rokService.createQuestion(newQuestion);
   }
 
+  @ApiOperation({ summary: 'Get all available questions.' })
   @UseGuards(AuthGuard())
   @Get('questions')
   async getQuestions() {
     return await this.rokService.getQuestions();
   }
 
+  @ApiOperation({ summary: 'Get question by `id`.' })
   @UseGuards(AuthGuard())
   @Get('questions/:id')
   async getQuestionById(@Param('id') id: string) {
     return await this.rokService.getQuestionById(id);
   }
 
+  @ApiOperation({ summary: 'Update question with `id`.' })
+  @ApiResponse({ status: 404, description: 'When the question with specified `id` is not found.' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Put('questions/:id')
   async updateQuestion(@Param('id') id: string, @Body() updates: UpdateRokQuestionDto) {
     return await this.rokService.updateQuestion(id, updates);
   }
 
+  @ApiOperation({ summary: 'Delete question with `id`.' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Delete('questions/:id')
   async deleteQuestion(@Param('id') id: string) {

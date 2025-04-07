@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
 import { RokRepository } from './rok.repository';
 import { RokGateway } from './rok.gateway';
 import { NewRokQuestionDto, RokAnswerQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
@@ -210,10 +210,6 @@ export class RokService implements OnModuleDestroy {
   }
 
   async updateQuestion(id: string, updates: UpdateRokQuestionDto) {
-    const question = await this.getQuestionById(id);
-    if (!question) {
-      throw new NotFoundException('The question with specified ID was not found.');
-    }
     return await this.rokRepository.updateQuestion(id, updates);
   }
 
