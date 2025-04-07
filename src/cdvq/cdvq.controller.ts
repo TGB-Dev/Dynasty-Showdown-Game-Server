@@ -189,7 +189,7 @@ export class CdvqGameController {
   @ApiResponse({ status: 200, description: 'Current question retrieved successfully' })
   @ApiResponse({ status: 400, description: 'Current question retrieval failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  @UseGuards(AuthGuard(UserRole.PLAYER))
+  @UseGuards(AuthGuard(UserRole.PLAYER, UserRole.ADMIN))
   getCurrentQuestion() {
     try {
       return this.gameService.getCurrentQuestion();
