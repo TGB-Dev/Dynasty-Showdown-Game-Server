@@ -8,8 +8,8 @@ import { ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
 export class CdvqQuestionRepository {
   constructor(@InjectModel(CdvqQuestion.name) private readonly cdvqQuestionModel: Model<CdvqQuestion>) {}
 
-  create(questionDTO: QuestionDto) {
-    const question = new this.cdvqQuestionModel(questionDTO);
+  create(object: any) {
+    const question = new this.cdvqQuestionModel(object);
     return question.save();
   }
 

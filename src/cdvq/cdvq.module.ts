@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CdvqGateway } from './cdvq.gateway';
-import { CdvqCRUDService, CdvqGameService } from './cdvq.service';
-import { CdvqAnswerController, CdvqGameController, CdvqQuestionController } from './cdvq.controller';
+import { CdvqGameService, CdvqService } from './cdvq.service';
+import { CdvqAnswerController, CdvqController, CdvqGameController } from './cdvq.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CdvqQuestion, CdvqQuestionSchema } from '../schemas/cdvq/cdvq-question-schema';
 import { UserModule } from '../user/user.module';
@@ -23,8 +23,8 @@ import { CdvqScoreRepository } from './cdvq-score.repository';
     ]),
     UserModule,
   ],
-  controllers: [CdvqQuestionController, CdvqGameController, CdvqAnswerController],
-  providers: [CdvqGateway, CdvqCRUDService, CdvqQuestionRepository, CdvqGameService, CdvqScoreRepository],
+  controllers: [CdvqGameController, CdvqAnswerController, CdvqController],
+  providers: [CdvqGateway, CdvqQuestionRepository, CdvqGameService, CdvqScoreRepository, CdvqService],
   exports: [CdvqGateway, CdvqQuestionRepository],
 })
 export class CdvqModule {}

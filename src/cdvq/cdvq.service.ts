@@ -9,35 +9,30 @@ import { CdvqState } from '../common/enum/cdvq-state.enum';
 import { CdvqScoreRepository } from './cdvq-score.repository';
 
 @Injectable()
-export class CdvqCRUDService {
-  constructor(private readonly cdvqRepository: CdvqQuestionRepository) {}
+export class CdvqService {
+  constructor(
+    private readonly questionRepository: CdvqQuestionRepository,
+    private readonly scoreRepository: CdvqScoreRepository,
+  ) {}
 
-  async createQuestion(questionDTO: QuestionDto) {
-    return await this.cdvqRepository.create(questionDTO);
+  getQuestionById(id: string) {
+    return this.questionRepository.getById(id);
   }
 
-  async createManyQuestion(questionsDto: ManyQuestionDto) {
-    return await this.cdvqRepository.createMany(questionsDto);
+  getQuestions(): Promise<CdvqQuestion[]> {
+    return this.questionRepository.getAll();
   }
 
-  async deleteQuestion(questionId: string) {
-    return await this.cdvqRepository.delete(questionId);
+  createQuestion(questionDTO: QuestionDto) {
+    return this.questionRepository.create(questionDTO);
   }
 
-  async updateQuestion(questionId: string, updateData: QuestionDto) {
-    return await this.cdvqRepository.update(questionId, updateData);
+  deleteQuestion(questionId: string) {
+    return this.questionRepository.delete(questionId);
   }
 
-  async getQuestions(): Promise<CdvqQuestion[]> {
-    return await this.cdvqRepository.getAll();
-  }
-
-  async getQuestionById(id: string): Promise<CdvqQuestion> {
-    const question = await this.cdvqRepository.getById(id);
-    if (!question) {
-      throw new BadRequestException('Question not found');
-    }
-    return question;
+  updateQuestion(questionId: string, updateData: QuestionDto) {
+    return this.questionRepository.update(questionId, updateData);
   }
 }
 

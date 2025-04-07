@@ -2,47 +2,57 @@ import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nes
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { CdvqAnswerDto, ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
+import { CdvqAnswerDto, QuestionDto } from '../dtos/cdvq.dto';
 import { CdvqQuestion } from '../schemas/cdvq/cdvq-question-schema';
-import { CdvqCRUDService, CdvqGameService } from './cdvq.service';
+import { CdvqGameService, CdvqService } from './cdvq.service';
 import { CdvqScore } from '../schemas/cdvq/cdvq-score.schema';
 
-@Controller('cdvq/question')
-export class CdvqQuestionController {
-  constructor(private readonly questionService: CdvqCRUDService) {}
+@Controller('cdvq')
+export class CdvqController {
+  constructor(private readonly cdvqService: CdvqService) {}
 
-  @Post('/create')
+  @Get('questions/:id')
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  @ApiOperation({ summary: 'Get a question by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
+  @ApiResponse({ status: 200, description: 'Returns the question', type: CdvqQuestion })
+  @ApiResponse({ status: 404, description: 'Question not found' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  getQuestionById(@Param('id') id: string): Promise<CdvqQuestion | null> {
+    return this.cdvqService.getQuestionById(id);
+  }
+
+  @Get('questions')
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  @ApiOperation({ summary: 'Get all questions' })
+  @ApiResponse({ status: 200, description: 'Returns list of questions', type: [CdvqQuestion] })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async getAllQuestions(): Promise<CdvqQuestion[]> {
+    return await this.cdvqService.getQuestions();
+  }
+
+  @Post('questions')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Create a new question' })
   @ApiResponse({ status: 201, description: 'Question created successfully' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiBody({ type: QuestionDto })
-  async createQuestion(@Body() questionDto: QuestionDto) {
-    return await this.questionService.createQuestion(questionDto);
+  createQuestion(@Body() questionDto: QuestionDto) {
+    return this.cdvqService.createQuestion(questionDto);
   }
 
-  @Post('/createmany')
-  @UseGuards(AuthGuard(UserRole.ADMIN))
-  @ApiOperation({ summary: 'Create multiple questions' })
-  @ApiResponse({ status: 201, description: 'Questions created successfully' })
-  @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  @ApiBody({ type: ManyQuestionDto })
-  async createManyQuestions(@Body() questionsDto: ManyQuestionDto) {
-    return await this.questionService.createManyQuestion(questionsDto);
-  }
-
-  @Delete('/delete/:id')
+  @Delete('questions/:id')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Delete a question by ID' })
   @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
   @ApiResponse({ status: 200, description: 'Question deleted successfully' })
   @ApiResponse({ status: 404, description: 'Question not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async deleteQuestion(@Param('id') id: string) {
-    return await this.questionService.deleteQuestion(id);
+  deleteQuestion(@Param('id') id: string) {
+    return this.cdvqService.deleteQuestion(id);
   }
 
-  @Put('/update/:id')
+  @Put('questions/:id')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Update a question by ID' })
   @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
@@ -50,28 +60,8 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 404, description: 'Question not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiBody({ type: QuestionDto })
-  async updateQuestion(@Param('id') id: string, @Body() questionDto: QuestionDto) {
-    return await this.questionService.updateQuestion(id, questionDto);
-  }
-
-  @Get('/all')
-  @UseGuards(AuthGuard(UserRole.ADMIN))
-  @ApiOperation({ summary: 'Get all questions' })
-  @ApiResponse({ status: 200, description: 'Returns list of questions', type: [CdvqQuestion] })
-  @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async getAllQuestions(): Promise<CdvqQuestion[]> {
-    return await this.questionService.getQuestions();
-  }
-
-  @Get('/:id')
-  @UseGuards(AuthGuard(UserRole.ADMIN))
-  @ApiOperation({ summary: 'Get a question by ID' })
-  @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
-  @ApiResponse({ status: 200, description: 'Returns the question', type: CdvqQuestion })
-  @ApiResponse({ status: 404, description: 'Question not found' })
-  @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async getQuestionById(@Param('id') id: string): Promise<CdvqQuestion> {
-    return await this.questionService.getQuestionById(id);
+  updateQuestion(@Param('id') id: string, @Body() questionDto: QuestionDto) {
+    return this.cdvqService.updateQuestion(id, questionDto);
   }
 }
 
