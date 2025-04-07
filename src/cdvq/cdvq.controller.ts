@@ -1,21 +1,11 @@
-import {
-  Body,
-  Controller,
-  Delete,
-  Get,
-  InternalServerErrorException,
-  Param,
-  Post,
-  Put,
-  UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, UseGuards } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
 import { CdvqAnswerDto, ManyQuestionDto, QuestionDto } from '../dtos/cdvq.dto';
-import { CdvqQuestion } from '../schemas/cdvq/cdvqQuestion.schema';
+import { CdvqQuestion } from '../schemas/cdvq/cdvq-question-schema';
 import { CdvqCRUDService, CdvqGameService } from './cdvq.service';
-import { CdvqScoreRecord } from '../schemas/cdvq/cdvqScoreRecord.schema';
+import { CdvqScore } from '../schemas/cdvq/cdvq-score.schema';
 
 @Controller('cdvq/question')
 export class CdvqQuestionController {
@@ -27,7 +17,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 201, description: 'Question created successfully' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiBody({ type: QuestionDto })
-  async createQuestion(@Body() questionDto: QuestionDto): Promise<{ message: string }> {
+  async createQuestion(@Body() questionDto: QuestionDto) {
     return await this.questionService.createQuestion(questionDto);
   }
 
@@ -37,7 +27,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 201, description: 'Questions created successfully' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiBody({ type: ManyQuestionDto })
-  async createManyQuestions(@Body() questionsDto: ManyQuestionDto): Promise<{ message: string }> {
+  async createManyQuestions(@Body() questionsDto: ManyQuestionDto) {
     return await this.questionService.createManyQuestion(questionsDto);
   }
 
@@ -48,7 +38,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 200, description: 'Question deleted successfully' })
   @ApiResponse({ status: 404, description: 'Question not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  async deleteQuestion(@Param('id') id: string): Promise<{ message: string }> {
+  async deleteQuestion(@Param('id') id: string) {
     return await this.questionService.deleteQuestion(id);
   }
 
@@ -60,7 +50,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 404, description: 'Question not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiBody({ type: QuestionDto })
-  async updateQuestion(@Param('id') id: string, @Body() questionDto: QuestionDto): Promise<{ message: string }> {
+  async updateQuestion(@Param('id') id: string, @Body() questionDto: QuestionDto) {
     return await this.questionService.updateQuestion(id, questionDto);
   }
 
@@ -136,7 +126,7 @@ export class CdvqGameController {
   @ApiResponse({ status: 400, description: 'Game result retrieval failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  async sendGameResult(): Promise<CdvqScoreRecord[]> {
+  async sendGameResult(): Promise<CdvqScore[]> {
     return await this.gameService.sendResult();
   }
 
@@ -161,7 +151,7 @@ export class CdvqAnswerController {
   @ApiResponse({ status: 400, description: 'Answer submission failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  async submit_answer(@Body() answerData: CdvqAnswerDto): Promise<{ message: string }> {
+  async submit_answer(@Body() answerData: CdvqAnswerDto) {
     return await this.gameService.submitAnswer(answerData);
   }
 }

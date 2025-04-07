@@ -2,7 +2,7 @@ import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Room } from '../common/enum/room.enum';
 import { CdvqTeamsResultsDto } from '../dtos/cdvq.dto';
-import { CdvqQuestion } from '../schemas/cdvq/cdvqQuestion.schema';
+import { CdvqQuestion } from '../schemas/cdvq/cdvq-question-schema';
 
 @WebSocketGateway({ cors: true })
 export class CdvqGateway {

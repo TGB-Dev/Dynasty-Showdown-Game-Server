@@ -1,10 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { BaseModel } from '../base.schema';
 
-export type CdvqScoreRecordDocument = HydratedDocument<CdvqScoreRecord>;
+export type CdvqScoreRecordDocument = HydratedDocument<CdvqScore>;
 
 @Schema({ timestamps: true })
-export class CdvqScoreRecord {
+export class CdvqScore extends BaseModel {
   @Prop({ required: true })
   username: string;
 
@@ -21,4 +22,4 @@ export class CdvqScoreRecord {
   answerTime: number;
 }
 
-export const CdvqScoreRecordSchema = SchemaFactory.createForClass(CdvqScoreRecord);
+export const CdvqScoreSchema = SchemaFactory.createForClass(CdvqScore);
