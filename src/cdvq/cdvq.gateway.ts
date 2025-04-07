@@ -37,16 +37,16 @@ export class CdvqGateway {
     this.server.emit('gameResumed');
   }
 
-  emitQuestion(question: Omit<CdvqQuestion, 'answer'>) {
-    this.server.emit('question', question);
+  emitQuestion() {
+    this.server.emit('question');
   }
 
-  emitAnsweredQuestion(answer: string) {
-    this.server.emit('answer', answer);
+  emitAnswer() {
+    this.server.emit('answer');
   }
 
-  emitResult(result: CdvqTeamsResultsDto[]) {
-    this.server.emit('result', result);
+  emitResult() {
+    this.server.emit('result');
   }
 
   emitReadyTimer(remainingTime: number) {

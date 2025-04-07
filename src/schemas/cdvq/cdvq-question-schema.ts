@@ -2,8 +2,8 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { randomUUID } from 'crypto';
 import { BaseModel } from '../base.schema';
-import { CdvqQuestionType } from '../../common/enum/cdvq-question-type.enum';
-import { CdvqQuestionStatus } from '../../common/enum/cdvq-question-status.enum';
+import { CdvqQuestionType } from '../../common/enum/cdvq/cdvq-question-type.enum';
+import { CdvqQuestionStatus } from '../../common/enum/cdvq/cdvq-question-status.enum';
 
 export type CdvqQuestionDocument = HydratedDocument<CdvqQuestion>;
 
@@ -15,11 +15,11 @@ export class CdvqQuestion extends BaseModel {
   @Prop({ required: true })
   questionText: string;
 
-  @Prop({ required: true })
+  @Prop({ required: true, type: String, enum: CdvqQuestionType })
   type: CdvqQuestionType;
 
-  @Prop({ type: [String], default: [] })
-  options?: string[]; // Just use in case of multiple choice
+  @Prop({ default: [] })
+  options: string[]; // Just use in case of multiple choice
 
   @Prop({ required: true })
   answer: string;
@@ -27,7 +27,7 @@ export class CdvqQuestion extends BaseModel {
   @Prop({ required: true, default: () => Date.now() })
   startTime: Date;
 
-  @Prop({ required: true, enum: ['waiting', 'completed'], default: CdvqQuestionStatus.WAITING })
+  @Prop({ required: true, type: String, enum: CdvqQuestionStatus, default: CdvqQuestionStatus.WAITING })
   status: CdvqQuestionStatus;
 }
 
