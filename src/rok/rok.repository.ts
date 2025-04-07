@@ -1,11 +1,10 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { RokAttack } from '../schemas/rok/rokAttack.schema';
 import { Model } from 'mongoose';
 import { RokMatrixState } from '../schemas/rok/rokMatrixState.schema';
 import { RokQuestion } from '../schemas/rok/rokQuestion.schema';
-import { NewRokQuestionDto } from '../dtos/rok/newRokQuestion.dto';
-import { UpdateRokQuestionDto } from '../dtos/rok/updateRokQuestion.dto';
+import { NewRokQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
 import { UserRepository } from '../user/user.repository';
 
 @Injectable()
@@ -43,6 +42,7 @@ export class RokRepository {
 
   async createQuestion(newQuestion: NewRokQuestionDto) {
     const newQuestionModel = new this.rokQuestionModel(newQuestion);
+    await newQuestionModel.validate();
     return await newQuestionModel.save();
   }
 
@@ -55,7 +55,14 @@ export class RokRepository {
   }
 
   async updateQuestion(id: string, updates: UpdateRokQuestionDto) {
-    return await this.rokQuestionModel.findOneAndUpdate({ _id: id }, updates, { new: true }).exec();
+    const question = await this.getQuestionById(id);
+    if (!question) {
+      throw new NotFoundException('The question with specified ID was not found.');
+    }
+
+    question.set(updates);
+    await question.validate();
+    return await question.save();
   }
 
   async deleteQuestion(id: string) {
@@ -154,7 +161,7 @@ export class RokRepository {
     });
 
     // Bonus points if there is any area of 4 adjacent cities
-    const teams = await this.userRepository.getTeams();
+    const teams = await this.userRepository.getTeamUsernames();
     for (const team of teams) {
       const cities = await this.rokMatrixModel.find({ owner: team }).exec();
       for (const city of cities) {
@@ -165,9 +172,10 @@ export class RokRepository {
       }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [k, v] of Object.entries(points)) {
-      // TODO: Update the points of teamName `k` an amount of `v`
+    for (const [teamUsername, _points] of Object.entries(points)) {
+      const teamId = (await this.userRepository.findUserByUsername(teamUsername))!._id!;
+      // @ts-expect-error `ObjectId`s are the same but different (?)
+      await this.userRepository.increaseScore(teamId, _points);
     }
   }
 

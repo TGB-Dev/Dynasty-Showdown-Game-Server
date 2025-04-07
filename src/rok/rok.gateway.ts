@@ -3,7 +3,7 @@ import { Server, Socket } from 'socket.io';
 import { Room } from '../common/enum/room.enum';
 import { UnauthorizedException } from '@nestjs/common';
 import { RokStage } from '../common/enum/rok/rokStage.enum';
-import { SendRokQuestionDto } from '../dtos/rok/sendRokQuestion.dto';
+import { SendRokQuestionDto } from '../dtos/rok.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from '../user/user.repository';
 import { RokAttack } from '../schemas/rok/rokAttack.schema';

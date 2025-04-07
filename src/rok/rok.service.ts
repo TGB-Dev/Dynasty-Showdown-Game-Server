@@ -1,11 +1,9 @@
-import { Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
 import { RokRepository } from './rok.repository';
 import { RokGateway } from './rok.gateway';
-import { RokAnswerQuestionDto } from '../dtos/rok/rokAnswerQuestion.dto';
+import { NewRokQuestionDto, RokAnswerQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
 import { RokStage } from '../common/enum/rok/rokStage.enum';
 import { UserRepository } from '../user/user.repository';
-import { NewRokQuestionDto } from '../dtos/rok/newRokQuestion.dto';
-import { UpdateRokQuestionDto } from '../dtos/rok/updateRokQuestion.dto';
 
 @Injectable()
 export class RokService implements OnModuleDestroy {
@@ -74,7 +72,7 @@ export class RokService implements OnModuleDestroy {
 
     if (this.currentStage === RokStage.DEFEND) {
       this.rokGateway.updateStage(this.currentStage);
-      const teams = await this.userRepository.getTeams();
+      const teams = await this.userRepository.getTeamUsernames();
       await this.sendQuestions(teams);
       await this.startTimer(40, (rem) => this.rokGateway.updateTimer(rem));
 
@@ -212,6 +210,10 @@ export class RokService implements OnModuleDestroy {
   }
 
   async updateQuestion(id: string, updates: UpdateRokQuestionDto) {
+    const question = await this.getQuestionById(id);
+    if (!question) {
+      throw new NotFoundException('The question with specified ID was not found.');
+    }
     return await this.rokRepository.updateQuestion(id, updates);
   }
 

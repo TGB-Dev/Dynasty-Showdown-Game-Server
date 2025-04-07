@@ -32,4 +32,8 @@ export class UserRepository {
   setScore(user_id: User | mongoose.Types.ObjectId | string, score: number) {
     return this.userModel.findByIdAndUpdate(user_id, { score }, { new: true });
   }
+
+  async getTeamUsernames() {
+    return (await this.userModel.find({}).exec()).map((user) => user.username);
+  }
 }

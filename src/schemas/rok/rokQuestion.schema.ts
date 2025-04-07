@@ -1,27 +1,44 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
+import { BaseModel } from '../base.schema';
+import { ApiProperty } from '@nestjs/swagger';
+import { Max, Min } from 'class-validator';
 
 export type RokQuestionDocument = HydratedDocument<RokQuestion>;
 
 @Schema()
-export class RokQuestion {
+export class RokQuestion extends BaseModel {
+  @ApiProperty({ description: 'The question.' })
   @Prop({ required: true })
   question: string;
 
   @Prop({ required: true, default: false })
   isMultiple: boolean;
 
-  // If isMultiple = false
-  @Prop()
-  answer: string;
+  @ApiProperty({ description: 'Required if `isMultiple = false`' })
+  @Prop({
+    // @ts-expect-error `this` should be specified
+    required: () => !this.isMultiple,
+  })
+  answer?: string;
 
-  // If isMultiple = true
-  @Prop({ type: [String] })
-  choices: string[];
+  @ApiProperty({ description: 'Required if `isMultiple = true`' })
+  @Prop({
+    type: [String],
+    // @ts-expect-error `this` should be specified
+    required: () => this.isMultiple === true,
+  })
+  choices?: string[];
 
-  @Prop()
-  correctChoiceIndex: number;
+  @ApiProperty({ description: 'Required if `isMultiple = true`' })
+  @Prop({
+    // @ts-expect-error `this` should be specified
+    required: () => this.isMultiple === true,
+  })
+  @Min(0)
+  correctChoiceIndex?: number;
 
+  @ApiProperty({ description: 'Whether the question is already chosen or not.' })
   @Prop()
   selected: boolean;
 }
