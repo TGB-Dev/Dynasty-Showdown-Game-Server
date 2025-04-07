@@ -1,8 +1,21 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  ClassSerializerInterceptor,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Request,
+  SerializeOptions,
+  UseGuards,
+  UseInterceptors,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiOperation, ApiParam, ApiResponse } from '@nestjs/swagger';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { QuestionDto } from '../dtos/cdvq.dto';
+import { CurrentQuestionResDto, QuestionDto } from '../dtos/cdvq.dto';
 import { CdvqQuestion } from '../schemas/cdvq/cdvq-question.schema';
 import { CdvqService } from './cdvq.service';
 import { AuthRequest } from '../common/interfaces/request.interface';
@@ -18,6 +31,8 @@ export class CdvqController {
   @ApiResponse({ status: 200, description: 'Current question retrieved successfully' })
   @ApiResponse({ status: 400, description: 'Current question retrieval failed' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({ type: CurrentQuestionResDto, excludeExtraneousValues: true })
   getCurrentQuestion() {
     return this.cdvqService.getCurrentQuestion();
   }

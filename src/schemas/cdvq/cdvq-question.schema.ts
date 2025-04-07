@@ -24,9 +24,6 @@ export class CdvqQuestion extends BaseModel {
   @Prop({ required: true })
   answer: string;
 
-  @Prop({ required: true, default: () => Date.now() })
-  startTime: Date;
-
   @Prop({ required: true, type: String, enum: CdvqQuestionStatus, default: CdvqQuestionStatus.WAITING })
   status: CdvqQuestionStatus;
 }

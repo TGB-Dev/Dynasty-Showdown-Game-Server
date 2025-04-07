@@ -1,15 +1,9 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  ArrayMaxSize,
-  ArrayMinSize,
-  IsArray,
-  IsBoolean,
-  IsEnum,
-  IsNotEmpty,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { Expose } from 'class-transformer';
+import { Prop } from '@nestjs/mongoose';
+import { CdvqQuestionType } from '../common/enum/cdvq/cdvq-question-type.enum';
+import { CdvqQuestionStatus } from '../common/enum/cdvq/cdvq-question-status.enum';
 
 export class QuestionDto {
   @ApiProperty({ required: true })
@@ -37,44 +31,19 @@ export class QuestionDto {
   answer: string;
 }
 
-export class CdvqScoreRecordDto {
-  @ApiProperty({ required: true })
-  @IsString()
-  @IsNotEmpty()
-  username: string;
+export class CurrentQuestionResDto {
+  @Expose()
+  @ApiProperty()
+  questionText: string;
 
-  @ApiProperty({ required: true })
-  @IsString()
-  @IsNotEmpty()
-  questionId: string;
-  @ApiProperty({ required: true })
-  @IsNumber()
-  @IsNotEmpty()
-  roundNumber: number;
+  @Expose()
+  @ApiProperty()
+  type: CdvqQuestionType;
 
-  @ApiProperty({ required: true })
-  @IsBoolean()
-  @IsNotEmpty()
-  isCorrect: boolean;
+  @Expose()
+  @ApiProperty()
+  options: string[];
 
-  @ApiProperty({ required: true })
-  @IsNumber()
-  answerTime: number;
-}
-
-export class CdvqTeamsResultsDto {
-  @ApiProperty({ required: true })
-  @IsString()
-  @IsNotEmpty()
-  username: string;
-
-  @ApiProperty({ required: true })
-  @IsNumber()
-  @IsNotEmpty()
-  answerTime: number;
-
-  @ApiProperty({ required: true })
-  @IsBoolean()
-  @IsNotEmpty()
-  isCorrect: boolean;
+  @Prop({ required: true, type: String, enum: CdvqQuestionStatus, default: CdvqQuestionStatus.WAITING })
+  status: CdvqQuestionStatus;
 }

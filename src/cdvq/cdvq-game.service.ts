@@ -24,7 +24,7 @@ const SCORE_CRITERIA = [
     score: 15,
   },
   {
-    users: 1000,
+    users: Infinity,
     score: 10,
   },
 ];
