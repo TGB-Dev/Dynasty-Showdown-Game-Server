@@ -4,7 +4,7 @@ import { Room } from '../common/enum/room.enum';
 import { CdvqTeamsResultsDto } from '../dtos/cdvq.dto';
 import { CdvqQuestion } from '../schemas/cdvq/cdvqQuestion.schema';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class CdvqGateway {
   @WebSocketServer() private readonly server: Server;
 
