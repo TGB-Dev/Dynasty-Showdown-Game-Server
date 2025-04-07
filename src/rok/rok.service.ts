@@ -1,9 +1,11 @@
-import { forwardRef, Inject, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
 import { RokRepository } from './rok.repository';
 import { RokGateway } from './rok.gateway';
 import { RokAnswerQuestionDto } from '../dtos/rok/rokAnswerQuestion.dto';
 import { RokStage } from '../common/enum/rok/rokStage.enum';
 import { UserRepository } from '../user/user.repository';
+import { NewRokQuestionDto } from '../dtos/rok/newRokQuestion.dto';
+import { UpdateRokQuestionDto } from '../dtos/rok/updateRokQuestion.dto';
 
 @Injectable()
 export class RokService implements OnModuleDestroy {
@@ -16,9 +18,7 @@ export class RokService implements OnModuleDestroy {
   currentStage: RokStage = RokStage.CHOOSE_CITY;
 
   constructor(
-    @Inject(forwardRef(() => RokRepository))
     private readonly rokRepository: RokRepository,
-    @Inject(forwardRef(() => RokGateway))
     private readonly rokGateway: RokGateway,
     private readonly userRepository: UserRepository,
   ) {}
@@ -87,7 +87,10 @@ export class RokService implements OnModuleDestroy {
       await this.rokRepository.updateOwnerships();
       await this.rokRepository.recalculatePoints();
       this.rokGateway.updateStage(this.currentStage);
-      await this.rokGateway.updateMatrix();
+
+      const matrix = await this.rokRepository.getMatrix();
+      this.rokGateway.updateMatrix(matrix);
+
       await this.startTimer(40, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
@@ -174,6 +177,46 @@ export class RokService implements OnModuleDestroy {
       const question = await this.rokRepository.getRandomQuestion();
       this.rokGateway.sendQuestion(team, question);
     }
+  }
+
+  async createAttack(teamUsername: string, cityId: number) {
+    if (!(this.timerIsRunning && this.currentStage === RokStage.ATTACK)) {
+      return;
+    }
+
+    await this.rokRepository.createAttack(teamUsername, cityId);
+    const updatedAttacks = await this.rokRepository.getAttacks();
+    this.rokGateway.updateAttacks(updatedAttacks);
+  }
+
+  async deleteAttack(teamUsername: string, cityId: number) {
+    if (!(this.timerIsRunning && this.currentStage === RokStage.ATTACK)) {
+      return;
+    }
+
+    await this.rokRepository.deleteAttack(teamUsername, cityId);
+    const updatedAttacks = await this.rokRepository.getAttacks();
+    this.rokGateway.updateAttacks(updatedAttacks);
+  }
+
+  async createQuestion(newQuestion: NewRokQuestionDto) {
+    await this.rokRepository.createQuestion(newQuestion);
+  }
+
+  async getQuestions() {
+    return await this.rokRepository.getQuestions();
+  }
+
+  async getQuestionById(id: string) {
+    return await this.rokRepository.getQuestionById(id);
+  }
+
+  async updateQuestion(id: string, updates: UpdateRokQuestionDto) {
+    return await this.rokRepository.updateQuestion(id, updates);
+  }
+
+  async deleteQuestion(id: string) {
+    return await this.rokRepository.deleteQuestion(id);
   }
 
   onModuleDestroy() {

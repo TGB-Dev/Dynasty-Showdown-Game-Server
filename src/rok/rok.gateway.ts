@@ -1,20 +1,19 @@
 import { ConnectedSocket, OnGatewayConnection, WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Room } from '../common/enum/room.enum';
-import { forwardRef, Inject, UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException } from '@nestjs/common';
 import { RokStage } from '../common/enum/rok/rokStage.enum';
-import { RokRepository } from './rok.repository';
 import { SendRokQuestionDto } from '../dtos/rok/sendRokQuestion.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from '../user/user.repository';
+import { RokAttack } from '../schemas/rok/rokAttack.schema';
+import { RokMatrixState } from '../schemas/rok/rokMatrixState.schema';
 
 @WebSocketGateway()
 export class RokGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;
 
   constructor(
-    @Inject(forwardRef(() => RokRepository))
-    private readonly rokRepository: RokRepository,
     private readonly jwtService: JwtService,
     private readonly userRepository: UserRepository,
   ) {}
@@ -68,13 +67,11 @@ export class RokGateway implements OnGatewayConnection {
     this.server.to(Room.ROK).emit('updateRound', round);
   }
 
-  async updateMatrix() {
-    const matrix = await this.rokRepository.getMatrix();
+  updateMatrix(matrix: RokMatrixState[]) {
     this.server.to(Room.ROK).emit('updateMatrix', matrix);
   }
 
-  async updateAttacks() {
-    const attacks = await this.rokRepository.getAttacks();
+  updateAttacks(attacks: RokAttack[]) {
     this.server.to(Room.ROK).emit('updateAttacks', attacks);
   }
 

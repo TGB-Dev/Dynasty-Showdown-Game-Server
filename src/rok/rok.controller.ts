@@ -15,7 +15,6 @@ import { RokGateway } from './rok.gateway';
 export class RokController {
   constructor(
     private readonly rokService: RokService,
-    private readonly rokRepository: RokRepository,
     private readonly rokGateway: RokGateway,
   ) {}
 
@@ -52,13 +51,13 @@ export class RokController {
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @Get('attack/create/:cityId')
   async createAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
-    await this.rokRepository.createAttack(req.user.username, cityId);
+    await this.rokService.createAttack(req.user.username, cityId);
   }
 
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @Get('attack/remove/:cityId')
   async deleteAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
-    await this.rokRepository.deleteAttack(req.user.username, cityId);
+    await this.rokService.deleteAttack(req.user.username, cityId);
   }
 
   @UseGuards(AuthGuard(UserRole.PLAYER))
@@ -74,30 +73,30 @@ export class RokController {
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Post('questions/create')
   async createQuestion(@Body() newQuestion: NewRokQuestionDto) {
-    return await this.rokRepository.createQuestion(newQuestion);
+    return await this.rokService.createQuestion(newQuestion);
   }
 
   @UseGuards(AuthGuard())
   @Get('questions')
   async getQuestions() {
-    return await this.rokRepository.getQuestions();
+    return await this.rokService.getQuestions();
   }
 
   @UseGuards(AuthGuard())
   @Get('questions/:id')
   async getQuestionById(@Param('id') id: string) {
-    return await this.rokRepository.getQuestionById(id);
+    return await this.rokService.getQuestionById(id);
   }
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Put('questions/:id')
   async updateQuestion(@Param('id') id: string, @Body() updates: UpdateRokQuestionDto) {
-    return await this.rokRepository.updateQuestion(id, updates);
+    return await this.rokService.updateQuestion(id, updates);
   }
 
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Delete('questions/:id')
   async deleteQuestion(@Param('id') id: string) {
-    return await this.rokRepository.deleteQuestion(id);
+    return await this.rokService.deleteQuestion(id);
   }
 }

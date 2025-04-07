@@ -1,4 +1,4 @@
-import { ConflictException, forwardRef, Inject, Injectable } from '@nestjs/common';
+import { ConflictException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { RokAttack } from '../schemas/rok/rokAttack.schema';
 import { Model } from 'mongoose';
@@ -7,9 +7,6 @@ import { RokQuestion } from '../schemas/rok/rokQuestion.schema';
 import { NewRokQuestionDto } from '../dtos/rok/newRokQuestion.dto';
 import { UpdateRokQuestionDto } from '../dtos/rok/updateRokQuestion.dto';
 import { UserRepository } from '../user/user.repository';
-import { RokService } from './rok.service';
-import { RokStage } from '../common/enum/rok/rokStage.enum';
-import { RokGateway } from './rok.gateway';
 
 @Injectable()
 export class RokRepository {
@@ -17,16 +14,12 @@ export class RokRepository {
     @InjectModel(RokAttack.name) private readonly rokAttackModel: Model<RokAttack>,
     @InjectModel(RokMatrixState.name) private readonly rokMatrixModel: Model<RokMatrixState>,
     @InjectModel(RokQuestion.name) private readonly rokQuestionModel: Model<RokQuestion>,
-    @Inject(forwardRef(() => RokService))
-    private readonly rokService: RokService,
-    @Inject(forwardRef(() => RokGateway))
-    private readonly rokGateway: RokGateway,
     private readonly userRepository: UserRepository,
   ) {}
 
   private readonly bfsDirections = [-1, +1, -9, +9];
 
-  async bfs(cityId: number, teamUsername: string) {
+  private async bfs(cityId: number, teamUsername: string) {
     const matrix = await this.getMatrix();
 
     const q = [{ cityId: cityId, cnt: 1 }];
@@ -101,26 +94,16 @@ export class RokRepository {
   }
 
   async createAttack(teamUsername: string, cityId: number) {
-    if (!(this.rokService.timerIsRunning && this.rokService.currentStage === RokStage.ATTACK)) {
-      return;
-    }
-
     const newAttack = new this.rokAttackModel({
       attackTeam: teamUsername,
       cityId: cityId,
     });
 
     await newAttack.save();
-    await this.rokGateway.updateAttacks();
   }
 
   async deleteAttack(teamUsername: string, cityId: number) {
-    if (!(this.rokService.timerIsRunning && this.rokService.currentStage === RokStage.ATTACK)) {
-      return;
-    }
-
     await this.rokAttackModel.findOneAndDelete({ cityId: cityId, attackTeam: teamUsername }).exec();
-    await this.rokGateway.updateAttacks();
   }
 
   // Delete attacks from `teamUsername`
