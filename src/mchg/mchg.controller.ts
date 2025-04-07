@@ -1,6 +1,5 @@
 import {
   Body,
-  ClassSerializerInterceptor,
   Controller,
   Get,
   Post,
@@ -49,6 +48,22 @@ export class MchgController {
   @UseGuards(AuthGuard(UserRole.ADMIN))
   runGame() {
     return this.mchgService.runGame();
+  }
+
+  @Post('game/pause')
+  @ApiOperation({ summary: 'Pause the game' })
+  @ApiOkResponse({ description: 'Game paused' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  pauseGame() {
+    this.mchgService.pauseGame();
+  }
+
+  @Post('game/resume')
+  @ApiOperation({ summary: 'Resume the game' })
+  @ApiOkResponse({ description: 'Game resumed' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  async resumeGame() {
+    await this.mchgService.resumeGame();
   }
 
   @Post('rounds')

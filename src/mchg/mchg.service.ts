@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { MchgRoundRepository } from './mchg-round.repository';
 import { CreateRoundReqDto } from '../dtos/mchg.dto';
 import { User } from '../schemas/user.schema';
@@ -21,7 +21,6 @@ export class MchgService implements OnModuleDestroy {
     private readonly mchgRoundRepository: MchgRoundRepository,
     private readonly mchgSubmissionRepository: MchgSubmissionRepository,
     private readonly mchgQuestionRepository: MchgQuestionRepository,
-    @Inject(forwardRef(() => MchgGateway))
     private readonly mchgGateway: MchgGateway,
   ) {}
 
