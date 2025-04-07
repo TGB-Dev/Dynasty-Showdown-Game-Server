@@ -92,6 +92,21 @@ export class CdvqQuestionController {
       throw new InternalServerErrorException(error);
     }
   }
+
+  @Get('/:id')
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  @ApiOperation({ summary: 'Get a question by ID' })
+  @ApiParam({ name: 'id', required: true, description: 'MongoDB _id of the question' })
+  @ApiResponse({ status: 200, description: 'Returns the question', type: CdvqQuestion })
+  @ApiResponse({ status: 404, description: 'Question not found' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  async getQuestionById(@Param('id') id: string): Promise<CdvqQuestion> {
+    try {
+      return await this.questionService.getQuestionById(id);
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
 }
 
 @Controller('cdvq/game')
@@ -164,6 +179,20 @@ export class CdvqGameController {
   async sendGameResult(): Promise<CdvqScoreRecord[]> {
     try {
       return await this.gameService.sendResult();
+    } catch (error) {
+      throw new InternalServerErrorException(error);
+    }
+  }
+
+  @Get('get-current-question')
+  @ApiOperation({ summary: 'Get current question' })
+  @ApiResponse({ status: 200, description: 'Current question retrieved successfully' })
+  @ApiResponse({ status: 400, description: 'Current question retrieval failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  getCurrentQuestion() {
+    try {
+      return this.gameService.getCurrentQuestion();
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

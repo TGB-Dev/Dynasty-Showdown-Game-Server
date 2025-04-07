@@ -29,6 +29,14 @@ export class CdvqCRUDService {
   async getQuestions(): Promise<CdvqQuestion[]> {
     return await this.cdvqRepository.getQuestions();
   }
+
+  async getQuestionById(id: string): Promise<CdvqQuestion> {
+    const question = await this.cdvqRepository.getQuestionById(id);
+    if (!question) {
+      throw new BadRequestException('Question not found');
+    }
+    return question;
+  }
 }
 
 @Injectable()
@@ -198,5 +206,12 @@ export class CdvqGameService {
     const result = await this.scoreRecordRepository.getRoundResult(this.currentQuestion);
     this.gameGateway.emitResult(result);
     return result;
+  }
+
+  getCurrentQuestion(): CdvqQuestion | null {
+    if (this.currentQuestion === null) {
+      throw new BadRequestException('No current question found');
+    }
+    return this.currentQuestion;
   }
 }
