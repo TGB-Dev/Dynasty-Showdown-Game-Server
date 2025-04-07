@@ -28,11 +28,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiBody({ type: QuestionDto })
   async createQuestion(@Body() questionDto: QuestionDto): Promise<{ message: string }> {
-    try {
-      return await this.questionService.createQuestion(questionDto);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return await this.questionService.createQuestion(questionDto);
   }
 
   @Post('/createmany')
@@ -42,11 +38,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiBody({ type: ManyQuestionDto })
   async createManyQuestions(@Body() questionsDto: ManyQuestionDto): Promise<{ message: string }> {
-    try {
-      return await this.questionService.createManyQuestion(questionsDto);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return await this.questionService.createManyQuestion(questionsDto);
   }
 
   @Delete('/delete/:id')
@@ -57,11 +49,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 404, description: 'Question not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async deleteQuestion(@Param('id') id: string): Promise<{ message: string }> {
-    try {
-      return await this.questionService.deleteQuestion(id);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return await this.questionService.deleteQuestion(id);
   }
 
   @Put('/update/:id')
@@ -73,11 +61,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @ApiBody({ type: QuestionDto })
   async updateQuestion(@Param('id') id: string, @Body() questionDto: QuestionDto): Promise<{ message: string }> {
-    try {
-      return await this.questionService.updateQuestion(id, questionDto);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return await this.questionService.updateQuestion(id, questionDto);
   }
 
   @Get('/all')
@@ -86,11 +70,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 200, description: 'Returns list of questions', type: [CdvqQuestion] })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async getAllQuestions(): Promise<CdvqQuestion[]> {
-    try {
-      return await this.questionService.getQuestions();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return await this.questionService.getQuestions();
   }
 
   @Get('/:id')
@@ -101,11 +81,7 @@ export class CdvqQuestionController {
   @ApiResponse({ status: 404, description: 'Question not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async getQuestionById(@Param('id') id: string): Promise<CdvqQuestion> {
-    try {
-      return await this.questionService.getQuestionById(id);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return await this.questionService.getQuestionById(id);
   }
 }
 
@@ -121,11 +97,7 @@ export class CdvqGameController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   startGame() {
-    try {
-      return this.gameService.startGame();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return this.gameService.startGame();
   }
 
   @Post('pause')
@@ -135,11 +107,7 @@ export class CdvqGameController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   pauseGame() {
-    try {
-      return this.gameService.pauseGame();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return this.gameService.pauseGame();
   }
 
   @Post('resume')
@@ -149,11 +117,7 @@ export class CdvqGameController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   resumeGame() {
-    try {
-      return this.gameService.resumeGame();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return this.gameService.resumeGame();
   }
 
   @Post('end')
@@ -163,11 +127,7 @@ export class CdvqGameController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   endGame() {
-    try {
-      return this.gameService.endGame();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return this.gameService.endGame();
   }
 
   @Post('send-result')
@@ -177,11 +137,7 @@ export class CdvqGameController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   async sendGameResult(): Promise<CdvqScoreRecord[]> {
-    try {
-      return await this.gameService.sendResult();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return await this.gameService.sendResult();
   }
 
   @Get('get-current-question')
@@ -191,11 +147,7 @@ export class CdvqGameController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.PLAYER, UserRole.ADMIN))
   getCurrentQuestion() {
-    try {
-      return this.gameService.getCurrentQuestion();
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return this.gameService.getCurrentQuestion();
   }
 }
 
@@ -210,10 +162,6 @@ export class CdvqAnswerController {
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   async submit_answer(@Body() answerData: CdvqAnswerDto): Promise<{ message: string }> {
-    try {
-      return await this.gameService.submitAnswer(answerData);
-    } catch (error) {
-      throw new InternalServerErrorException(error);
-    }
+    return await this.gameService.submitAnswer(answerData);
   }
 }
