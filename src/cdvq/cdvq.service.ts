@@ -80,7 +80,7 @@ export class CdvqGameService {
           if (!currentQuestion) {
             throw new BadRequestException('No current question found');
           }
-          this.gameGateway.emitQuestion(currentQuestion.questionText);
+          this.gameGateway.emitQuestion({ ...currentQuestion });
           this.startCountdown(currentQuestion);
         }
         this.readyTime--;
@@ -100,7 +100,7 @@ export class CdvqGameService {
     this.readyTime = 3;
     this.remainingTime = roundDuration;
     this.roundNumber++;
-    const question = await this.questionRepository.getFirstWaitingQuestion();
+    const question = (await this.questionRepository.getFirstWaitingQuestion()).toObject();
     this.currentQuestion = question;
     await this.questionRepository.updateQuestionDate(question, new Date());
     this.readyCountdown(question);
@@ -142,7 +142,7 @@ export class CdvqGameService {
     return { message: `Game ended`, remainingTime: this.remainingTime };
   }
 
-  async submit_answer(answerData: CdvqAnswerDto) {
+  async submitAnswer(answerData: CdvqAnswerDto) {
     if (this.gameState !== 'RUNNING' || this.currentQuestion === null || !this.startTime) {
       throw new BadRequestException('Cannot submit answer');
     }

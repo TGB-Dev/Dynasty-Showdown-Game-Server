@@ -50,7 +50,7 @@ export class QuestionRepository {
     return question;
   }
 
-  async getFirstWaitingQuestion(): Promise<CdvqQuestion> {
+  async getFirstWaitingQuestion() {
     const question = await this.cdvqQuestionModel.findOne({ status: 'waiting' }).exec();
     if (!question) {
       throw new Error('No waiting question found');

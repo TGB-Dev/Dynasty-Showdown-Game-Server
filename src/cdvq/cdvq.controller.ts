@@ -182,7 +182,7 @@ export class CdvqAnswerController {
   @UseGuards(AuthGuard(UserRole.PLAYER))
   async submit_answer(@Body() answerData: CdvqAnswerDto): Promise<{ message: string }> {
     try {
-      return await this.gameService.submit_answer(answerData);
+      return await this.gameService.submitAnswer(answerData);
     } catch (error) {
       throw new InternalServerErrorException(error);
     }

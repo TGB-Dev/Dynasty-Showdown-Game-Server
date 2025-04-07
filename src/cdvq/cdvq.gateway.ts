@@ -2,6 +2,7 @@ import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Room } from '../common/enum/room.enum';
 import { CdvqTeamsResultsDto } from '../dtos/cdvq.dto';
+import { CdvqQuestion } from '../schemas/cdvq/cdvqQuestion.schema';
 
 @WebSocketGateway()
 export class CdvqGateway {
@@ -21,7 +22,7 @@ export class CdvqGateway {
   }
 
   emitTimerUpdate(remainingTime: number) {
-    this.server.emit('timerUpdate', { remainingTime });
+    this.server.emit('timerUpdate', remainingTime);
   }
 
   emitGameEnded() {
@@ -36,7 +37,7 @@ export class CdvqGateway {
     this.server.emit('gameResumed');
   }
 
-  emitQuestion(question: string) {
+  emitQuestion(question: Omit<CdvqQuestion, 'answer'>) {
     this.server.emit('question', question);
   }
 
@@ -49,6 +50,6 @@ export class CdvqGateway {
   }
 
   emitReadyTimer(remainingTime: number) {
-    this.server.emit('readyTimer', { remainingTime });
+    this.server.emit('readyTimer', remainingTime);
   }
 }
