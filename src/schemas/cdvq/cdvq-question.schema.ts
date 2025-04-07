@@ -19,7 +19,7 @@ export class CdvqQuestion extends BaseModel {
   type: CdvqQuestionType;
 
   @Prop({ default: [] })
-  options: string[]; // Just use in case of multiple choice
+  options: string[];
 
   @Prop({ required: true })
   answer: string;

@@ -9,9 +9,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
-  ValidateNested,
 } from 'class-validator';
-import { Type } from 'class-transformer';
 
 export class QuestionDto {
   @ApiProperty({ required: true })
@@ -32,27 +30,6 @@ export class QuestionDto {
   @ArrayMaxSize(4)
   @ArrayMinSize(4)
   options?: string[];
-
-  @ApiProperty({ required: true })
-  @IsString()
-  @IsNotEmpty()
-  answer: string;
-}
-
-export class ManyQuestionDto {
-  @ApiProperty({ required: true })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => QuestionDto)
-  questions: QuestionDto[];
-}
-
-
-export class CdvqAnswerDto {
-  @ApiProperty({ required: true })
-  @IsString()
-  @IsNotEmpty()
-  username: string;
 
   @ApiProperty({ required: true })
   @IsString()

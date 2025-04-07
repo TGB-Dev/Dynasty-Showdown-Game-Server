@@ -3,13 +3,13 @@ import { CdvqGateway } from './cdvq.gateway';
 import { CdvqService } from './cdvq.service';
 import { CdvqController } from './cdvq.controller';
 import { MongooseModule } from '@nestjs/mongoose';
-import { CdvqQuestion, CdvqQuestionSchema } from '../schemas/cdvq/cdvq-question-schema';
+import { CdvqQuestion, CdvqQuestionSchema } from '../schemas/cdvq/cdvq-question.schema';
 import { UserModule } from '../user/user.module';
 import { CdvqQuestionRepository } from './cdvq-question.repository';
-import { CdvqScore, CdvqScoreSchema } from '../schemas/cdvq/cdvq-score.schema';
-import { CdvqScoreRepository } from './cdvq-score.repository';
 import { CdvqTimerService } from './cdvq-timer.service';
 import { CdvqGameService } from './cdvq-game.service';
+import { CdvqSubmission, CdvqSubmissionSchema } from '../schemas/cdvq/cdvq-submission.schema';
+import { CdvqSubmissionRepository } from './cdvq-submission.repository';
 
 @Module({
   imports: [
@@ -19,14 +19,21 @@ import { CdvqGameService } from './cdvq-game.service';
         schema: CdvqQuestionSchema,
       },
       {
-        name: CdvqScore.name,
-        schema: CdvqScoreSchema,
+        name: CdvqSubmission.name,
+        schema: CdvqSubmissionSchema,
       },
     ]),
     UserModule,
   ],
   controllers: [CdvqController],
-  providers: [CdvqGateway, CdvqQuestionRepository, CdvqScoreRepository, CdvqService, CdvqTimerService, CdvqGameService],
+  providers: [
+    CdvqGateway,
+    CdvqQuestionRepository,
+    CdvqSubmissionRepository,
+    CdvqService,
+    CdvqTimerService,
+    CdvqGameService,
+  ],
   exports: [CdvqGateway, CdvqQuestionRepository],
 })
 export class CdvqModule {}

@@ -1,30 +1,19 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { CdvqQuestionRepository } from './cdvq-question.repository';
 import { QuestionDto } from '../dtos/cdvq.dto';
-import { CdvqQuestion } from '../schemas/cdvq/cdvq-question-schema';
-import { CdvqGameState } from '../common/enum/cdvq/cdvq-game-state.enum';
-import { CdvqScoreRepository } from './cdvq-score.repository';
-import { CdvqRoundState } from '../common/enum/cdvq/cdvq-round-state.enum';
-import { CdvqTimerService } from './cdvq-timer.service';
-import { CdvqGateway } from './cdvq.gateway';
+import { CdvqQuestion } from '../schemas/cdvq/cdvq-question.schema';
 import { CdvqGameService } from './cdvq-game.service';
+import { User } from '../schemas/user.schema';
 
 @Injectable()
 export class CdvqService {
   constructor(
     private readonly questionRepository: CdvqQuestionRepository,
-    private readonly scoreRepository: CdvqScoreRepository,
     private readonly gameService: CdvqGameService,
   ) {}
 
-  private timerIsRunning = false;
-
   getCurrentQuestion() {
     return this.gameService.getCurrentQuestion();
-  }
-
-  getQuestionById(id: string) {
-    return this.questionRepository.getById(id);
   }
 
   getQuestions(): Promise<CdvqQuestion[]> {
@@ -45,5 +34,17 @@ export class CdvqService {
 
   startGame() {
     return this.gameService.startGame();
+  }
+
+  answerCurrentQuestion(user: User, answer: string) {
+    return this.gameService.answerCurrentQuestion(user, answer);
+  }
+
+  getRoundResults() {
+    return this.gameService.getRoundResults();
+  }
+
+  getCurrentQuestionAnswer(user: User) {
+    return this.gameService.getCurrentQuestionAnswer(user);
   }
 }
