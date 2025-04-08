@@ -69,7 +69,7 @@ export class RokController {
 
   @ApiOperation({ summary: 'Answer the question with `questionId`.' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Get('questions/answer/:questionId')
+  @Post('questions/answer/:questionId')
   async answerQuestion(
     @Param('questionId') questionId: string,
     @Request() req: AuthRequest,
