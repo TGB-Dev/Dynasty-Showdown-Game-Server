@@ -11,4 +11,12 @@ export class MchgSubmissionRepository {
     const newSubmission = new this.mchgSubmissionModel(submission);
     return newSubmission.save();
   }
+
+  async getAll() {
+    return await this.mchgSubmissionModel.find({}).exec();
+  }
+
+  async deleteAll() {
+    return await this.mchgSubmissionModel.deleteMany({}).exec();
+  }
 }

@@ -50,4 +50,8 @@ export class MchgGateway {
   resumeGame() {
     this.server.to(Room.MCHG).emit('resumeGame');
   }
+
+  broadcastQuestion(question: MchgQuestion) {
+    this.server.to(Room.MCHG).emit('broadcastQuestion', question);
+  }
 }

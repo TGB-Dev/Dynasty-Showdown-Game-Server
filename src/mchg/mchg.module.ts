@@ -10,6 +10,8 @@ import { MchgSubmission, MchgSubmissionSchema } from '../schemas/mchg/mchgSubmis
 import { MchgSubmissionRepository } from './mchg-submission.repository';
 import { MchgQuestionRepository } from './mchg-question.repository';
 import { MchgQuestion, MchgQuestionSchema } from '../schemas/mchg/mchgQuestion.schema';
+import { MchgMainQuestionQueue, MchgMainQuestionQueueSchema } from '../schemas/mchg/mchgMainQuestionQueue.schema';
+import { MchgMainQuestionQueueRepository } from './mchg-main-question-queue.repository';
 
 @Module({
   imports: [
@@ -17,10 +19,18 @@ import { MchgQuestion, MchgQuestionSchema } from '../schemas/mchg/mchgQuestion.s
       { name: MchgRound.name, schema: MchgRoundSchema },
       { name: MchgSubmission.name, schema: MchgSubmissionSchema },
       { name: MchgQuestion.name, schema: MchgQuestionSchema },
+      { name: MchgMainQuestionQueue.name, schema: MchgMainQuestionQueueSchema },
     ]),
     UserModule,
   ],
-  providers: [MchgGateway, MchgService, MchgRoundRepository, MchgSubmissionRepository, MchgQuestionRepository],
+  providers: [
+    MchgGateway,
+    MchgService,
+    MchgRoundRepository,
+    MchgSubmissionRepository,
+    MchgQuestionRepository,
+    MchgMainQuestionQueueRepository,
+  ],
   controllers: [MchgController],
   exports: [MchgGateway],
 })

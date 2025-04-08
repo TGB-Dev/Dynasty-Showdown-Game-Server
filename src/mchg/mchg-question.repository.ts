@@ -23,4 +23,8 @@ export class MchgQuestionRepository {
   async getSolved() {
     return await this.mchgQuestionModel.find({ solved: true }).exec();
   }
+
+  async getAll() {
+    return await this.mchgQuestionModel.find({}).exec();
+  }
 }
