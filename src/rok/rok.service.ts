@@ -23,7 +23,7 @@ export class RokService implements OnModuleDestroy {
 
   async runGame() {
     await this.startTimer(3, (rem) => this.rokGateway.updateRunGameTimer(rem));
-    await this.runRound();
+    void this.runRound();
   }
 
   pauseGame() {
@@ -32,11 +32,11 @@ export class RokService implements OnModuleDestroy {
     this.rokGateway.pauseGame();
   }
 
-  async resumeGame() {
+  resumeGame() {
     this.currentStage = this.lastStage;
     this.lastStage = RokStage.PAUSED;
     this.rokGateway.resumeGame();
-    await this.runRound();
+    void this.runRound();
   }
 
   async runRound() {

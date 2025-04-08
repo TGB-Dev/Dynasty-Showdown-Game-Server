@@ -22,15 +22,15 @@ export class RokController {
   @ApiOperation({ summary: 'Resume the game.' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('game/resume')
-  async resumeGame() {
-    return await this.rokService.resumeGame();
+  resumeGame() {
+    this.rokService.resumeGame();
   }
 
   @ApiOperation({ summary: 'Run the game (with a "3 2 1" timer).' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('game/run')
-  runRound() {
-    return this.rokService.runGame();
+  async runRound() {
+    return await this.rokService.runGame();
   }
 
   @ApiOperation({ summary: 'Pause the game.' })
