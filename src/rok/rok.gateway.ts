@@ -9,7 +9,7 @@ import { UserRepository } from '../user/user.repository';
 import { RokAttack } from '../schemas/rok/rokAttack.schema';
 import { RokMatrixState } from '../schemas/rok/rokMatrixState.schema';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class RokGateway implements OnGatewayConnection {
   @WebSocketServer() server: Server;
 

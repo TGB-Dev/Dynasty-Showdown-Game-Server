@@ -3,10 +3,11 @@ import { RokService } from './rok.service';
 import { NewRokQuestionDto, RokAnswerQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { ApiBearerAuth, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthRequest } from '../common/interfaces/request.interface';
 import { RokGateway } from './rok.gateway';
 
+@ApiTags('Rise of Kingdom')
 @ApiBearerAuth()
 @ApiResponse({ status: 401, description: 'You are not authorized to do the specified operation.' })
 @ApiResponse({ status: 200, description: 'OK.' })
@@ -68,6 +69,7 @@ export class RokController {
   }
 
   @ApiOperation({ summary: 'Answer the question with `questionId`.' })
+  @ApiResponse({ status: 201, description: 'OK (POST).' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @Post('questions/answer/:questionId')
   async answerQuestion(

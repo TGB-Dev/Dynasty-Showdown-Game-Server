@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { HydratedDocument } from 'mongoose';
 import { BaseModel } from '../base.schema';
 import { ApiProperty } from '@nestjs/swagger';
-import { Max, Min } from 'class-validator';
+import { Min } from 'class-validator';
 
 export type RokQuestionDocument = HydratedDocument<RokQuestion>;
 
