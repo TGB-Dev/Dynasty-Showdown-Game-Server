@@ -9,11 +9,13 @@ import { UserRepository } from '../user/user.repository';
 export class RokService implements OnModuleDestroy {
   private remainingTime = 0;
   private interval: NodeJS.Timeout | null = null;
+  private timerIsRunning: boolean = false;
+
   private lastStage: RokStage = RokStage.PAUSED;
+  private currentStage: RokStage = RokStage.CHOOSE_CITY;
+
   private roundCount: number = 10;
   private currentRound: number = 0;
-  timerIsRunning: boolean = false;
-  currentStage: RokStage = RokStage.CHOOSE_CITY;
 
   constructor(
     private readonly rokRepository: RokRepository,
@@ -21,9 +23,11 @@ export class RokService implements OnModuleDestroy {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async runGame() {
-    await this.startTimer(3, (rem) => this.rokGateway.updateRunGameTimer(rem));
-    void this.runRound();
+  runGame() {
+    void (async () => {
+      await this.startTimer(3, (rem) => this.rokGateway.updateRunGameTimer(rem));
+      void this.runRound();
+    })();
   }
 
   pauseGame() {
@@ -41,7 +45,7 @@ export class RokService implements OnModuleDestroy {
 
   async runRound() {
     if (this.currentRound >= this.roundCount) {
-      return;
+      this.rokGateway.endGame();
     }
 
     if (this.currentStage === RokStage.PAUSED) {

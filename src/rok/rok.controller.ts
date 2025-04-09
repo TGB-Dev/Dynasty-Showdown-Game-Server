@@ -26,7 +26,10 @@ export class RokController {
     this.rokService.resumeGame();
   }
 
-  @ApiOperation({ summary: 'Run the game (with a "3 2 1" timer).' })
+  @ApiOperation({
+    summary:
+      'Run the game (with a "3 2 1" timer). The game will emit the `endGame` event after all rounds are finished.`',
+  })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('game/run')
   async runRound() {

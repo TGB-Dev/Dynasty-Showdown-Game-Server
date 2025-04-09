@@ -51,6 +51,10 @@ export class RokGateway implements OnGatewayConnection {
     this.server.to(Room.ROK).emit('resumeGame');
   }
 
+  endGame() {
+    this.server.to(Room.ROK).emit('endGame');
+  }
+
   updateTimer(remainingTimeInSeconds: number) {
     this.server.to(Room.ROK).emit('timerUpdate', remainingTimeInSeconds);
   }
