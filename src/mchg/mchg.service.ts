@@ -118,9 +118,12 @@ export class MchgService implements OnModuleDestroy {
     return this.mchgQuestionRepository.findById(currentRound.currentQuestion);
   }
 
-  async runGame() {
-    await this.startTimer(3, (rem) => this.mchgGateway.updateRunGameTimer(rem));
-    void this.runRound();
+  runGame() {
+    this.roundIndex = 0;
+    void (async () => {
+      await this.startTimer(3, (rem) => this.mchgGateway.updateRunGameTimer(rem));
+      void this.runRound();
+    })();
   }
 
   async runRound() {

@@ -21,7 +21,9 @@ export class MchgGateway {
     this.server.to(Room.MCHG).emit('message', message);
   }
 
-  answerMainAnswer() {}
+  answerMainAnswer() {
+    this.server.to(Room.MCHG).emit('answerMainAnswer');
+  }
 
   updateStage(stage: MchgStage) {
     this.server.to(Room.MCHG).emit('updateStage', stage);
