@@ -56,4 +56,8 @@ export class MchgGateway {
   broadcastQuestion(question: MchgQuestion) {
     this.server.to(Room.MCHG).emit('broadcastQuestion', question);
   }
+
+  broadcastAnswers() {
+    this.server.to(Room.MCHG).emit('broadcastAnswers');
+  }
 }

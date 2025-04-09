@@ -145,6 +145,15 @@ export class MchgController {
     await this.mchgService.submitAnswer(answer, user);
   }
 
+  @Post('round/current/answer')
+  @ApiOperation({ summary: "Get the current question's answer (should be called in 5s after receiving the signal)" })
+  @ApiOkResponse({ type: String })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @UseGuards(AuthGuard())
+  getCurrentQuestionAnswer() {
+    return this.mchgService.getCurrentQuestionAnswer();
+  }
+
   @Post('mainQuestion/request')
   @ApiOperation({ summary: 'Request to answer the main question' })
   @ApiCreatedResponse({ description: 'Request submitted' })

@@ -65,6 +65,10 @@ export class MchgService implements OnModuleDestroy {
   }
 
   answerMainAnswer() {
+    if (this.currentStage === MchgStage.UPDATE_RESULTS) {
+      return;
+    }
+
     this.lastStage = this.currentStage;
     this.currentStage = MchgStage.ANSWERING_MAIN_QUESTION;
     this.stopTimer();
@@ -155,9 +159,12 @@ export class MchgService implements OnModuleDestroy {
     }
 
     if (this.currentStage === MchgStage.UPDATE_RESULTS) {
+      this.mchgGateway.broadcastAnswers();
       await this.updateScores();
       this.mchgGateway.updateStage(this.currentStage);
       this.mchgGateway.updateSolvedQuestions(await this.mchgQuestionRepository.getSolved());
+
+      await this.startTimer(5, (rem) => this.mchgGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
       this.currentStage = MchgStage.CHOOSING_QUESTION;
@@ -203,6 +210,10 @@ export class MchgService implements OnModuleDestroy {
   }
 
   async requestToAnswerMainQuestion(teamUsername: string) {
+    if (this.currentStage === MchgStage.UPDATE_RESULTS) {
+      return;
+    }
+
     await this.mchgMainQuestionQueueRepository.enqueue(teamUsername);
   }
 
@@ -233,11 +244,24 @@ export class MchgService implements OnModuleDestroy {
   async updateScores() {
     const submissions = await this.mchgSubmissionRepository.getAll();
     for (const submission of submissions) {
-      if (submission.answer === submission.question.answer) {
+      if (submission.answer.trim().toLowerCase() === submission.question.answer.trim().toLowerCase()) {
         this.userRepository.increaseScore(submission.user._id!, 15);
       }
     }
     await this.mchgSubmissionRepository.deleteAll();
+  }
+
+  async getCurrentQuestionAnswer() {
+    if (this.currentStage !== MchgStage.UPDATE_RESULTS) {
+      return;
+    }
+
+    const question = await this.getCurrentQuestion();
+    if (!question) {
+      throw new NotFoundException('Question not found');
+    }
+
+    return question.answer;
   }
 
   onModuleDestroy() {
