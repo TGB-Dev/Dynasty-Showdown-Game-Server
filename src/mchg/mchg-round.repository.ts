@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { MchgRound } from '../schemas/mchg/mchgRound.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
 @Injectable()
 export class MchgRoundRepository {
@@ -10,6 +10,10 @@ export class MchgRoundRepository {
   create(round: any): Promise<MchgRound> {
     const newRound = new this.mchgRoundModel(round);
     return newRound.save();
+  }
+
+  update(roundId: string | mongoose.Types.ObjectId, round: Partial<MchgRound>): Promise<MchgRound | null> {
+    return this.mchgRoundModel.findByIdAndUpdate(roundId, round, { new: true }).exec();
   }
 
   getAll(): Promise<MchgRound[]> {

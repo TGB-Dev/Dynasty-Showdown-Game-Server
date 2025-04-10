@@ -8,6 +8,7 @@ import { MchgStage } from '../common/enum/mchg/mchgStage.enum';
 import { MchgGateway } from './mchg.gateway';
 import { MchgMainQuestionQueueRepository } from './mchg-main-question-queue.repository';
 import { UserRepository } from '../user/user.repository';
+import mongoose from 'mongoose';
 
 @Injectable()
 export class MchgService implements OnModuleDestroy {
@@ -119,6 +120,10 @@ export class MchgService implements OnModuleDestroy {
   async getCurrentQuestion() {
     const currentRound = await this.getCurrentRound();
 
+    if (!currentRound.currentQuestion) {
+      throw new BadRequestException('No current question');
+    }
+
     return this.mchgQuestionRepository.findById(currentRound.currentQuestion);
   }
 
@@ -199,7 +204,8 @@ export class MchgService implements OnModuleDestroy {
     }
 
     const currentRound = await this.getCurrentRound();
-    currentRound.currentQuestion = id;
+    currentRound.currentQuestion = new mongoose.Types.ObjectId(id);
+    await this.mchgRoundRepository.update(currentRound._id, currentRound);
 
     this.selectedQuestionNum++;
     this.mchgGateway.broadcastQuestion(question);

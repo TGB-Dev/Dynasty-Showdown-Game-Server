@@ -25,8 +25,8 @@ export class MchgRound extends BaseModel {
 
   @Expose({ groups: [UserRole.ADMIN] })
   @Prop({ type: mongoose.Types.ObjectId, ref: MchgQuestion.name })
-  @Transform((value) => (value.obj as MchgRound).currentQuestion.toString())
-  currentQuestion: string;
+  @Transform((value) => (value.obj as MchgRound).currentQuestion?.toString())
+  currentQuestion?: mongoose.Types.ObjectId;
 
   @ApiProperty({ description: "Round's order index" })
   @Expose({ groups: [UserRole.ADMIN] })

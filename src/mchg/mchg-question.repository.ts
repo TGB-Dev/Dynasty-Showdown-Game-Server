@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { MchgQuestion } from '../schemas/mchg/mchgQuestion.schema';
 
 @Injectable()
@@ -16,7 +16,7 @@ export class MchgQuestionRepository {
     return Promise.all(questions.map((question) => this.create(question)));
   }
 
-  findById(id: string): Promise<MchgQuestion | null> {
+  findById(id: string | mongoose.Types.ObjectId): Promise<MchgQuestion | null> {
     return this.mchgQuestionModel.findById(id).exec();
   }
 
