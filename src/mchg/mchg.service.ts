@@ -55,8 +55,8 @@ export class MchgService {
     return this.questionRepository.getAll();
   }
 
-  async selectQuestion(id: string) {
-    await this.gameService.selectQuestion(id);
+  async selectQuestion(index: number) {
+    await this.gameService.selectQuestion(index);
   }
 
   async requestAnswerMainQuestion(user: User) {

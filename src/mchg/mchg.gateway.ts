@@ -17,6 +17,10 @@ export class MchgGateway {
     this.server.socketsLeave(Room.MCHG);
   }
 
+  endGame() {
+    this.server.to(Room.MCHG).emit('endGame');
+  }
+
   sendMessage(message: string) {
     this.server.to(Room.MCHG).emit('message', message);
   }

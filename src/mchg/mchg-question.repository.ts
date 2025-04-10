@@ -20,6 +20,10 @@ export class MchgQuestionRepository {
     return this.mchgQuestionModel.findById(id).exec();
   }
 
+  async updateSelected(id: string | mongoose.Types.ObjectId, selected: boolean): Promise<MchgQuestion | null> {
+    return await this.mchgQuestionModel.findByIdAndUpdate(id, { selected }, { new: true, runValidators: true }).exec();
+  }
+
   async getSolved() {
     return await this.mchgQuestionModel.find({ solved: true }).exec();
   }

@@ -19,7 +19,7 @@ export class MchgRound extends BaseModel {
   @ApiProperty({ description: "Round's questions", type: [MchgQuestion] })
   @ValidateNested({ each: true })
   @Type(() => MchgQuestion)
-  @Expose({ groups: [UserRole.ADMIN] })
+  @Expose({ groups: [UserRole.ADMIN, UserRole.PLAYER] })
   @Prop({ type: [{ type: mongoose.Schema.Types.ObjectId, ref: MchgQuestion.name }], required: true })
   questions: MchgQuestion[];
 

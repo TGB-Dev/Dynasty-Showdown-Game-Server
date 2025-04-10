@@ -118,13 +118,13 @@ export class MchgController {
     return await this.mchgService.getCurrentRound();
   }
 
-  @Post('rounds/current/questions/select/:id')
+  @Post('rounds/current/questions/select/:index')
   @ApiOperation({ summary: "Select the current round's question" })
   @ApiOkResponse({ description: "Select the current round's question" })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  async selectQuestion(@Param('id') id: string) {
-    return await this.mchgService.selectQuestion(id);
+  async selectQuestion(@Param('index') index: number) {
+    return await this.mchgService.selectQuestion(index);
   }
 
   @Get('rounds/current/questions')
@@ -145,7 +145,7 @@ export class MchgController {
     await this.mchgService.submitAnswer(answer, user);
   }
 
-  @Post('round/current/answer')
+  @Get('round/current/answer')
   @ApiOperation({ summary: "Get the current question's answer (should be called in 5s after receiving the signal)" })
   @ApiOkResponse({ type: String })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
@@ -163,7 +163,7 @@ export class MchgController {
     await this.mchgService.requestAnswerMainQuestion(user);
   }
 
-  @Post('mainQuestion/dequeue')
+  @Post('mainQuestion/next')
   @ApiOperation({ summary: 'Dequeue the main question requests queue' })
   @ApiCreatedResponse({ description: 'Dequeued the main question requests queue' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })

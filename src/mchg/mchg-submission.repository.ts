@@ -12,11 +12,11 @@ export class MchgSubmissionRepository {
     return newSubmission.save();
   }
 
-  async getAll() {
-    return await this.mchgSubmissionModel.find({}).exec();
+  getAll() {
+    return this.mchgSubmissionModel.find({}).populate('question').exec();
   }
 
-  async deleteAll() {
-    return await this.mchgSubmissionModel.deleteMany({}).exec();
+  deleteAll() {
+    return this.mchgSubmissionModel.deleteMany({}).exec();
   }
 }
