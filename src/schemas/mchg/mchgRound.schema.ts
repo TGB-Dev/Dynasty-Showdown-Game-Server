@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { MchgImage, MchgImageSchema } from './mchgImage.schema';
 import { MchgQuestion } from './mchgQuestion.schema';
 import { ApiProperty } from '@nestjs/swagger';
-import { ArrayMaxSize, ArrayMinSize, IsArray, ValidateNested } from 'class-validator';
+import { ValidateNested } from 'class-validator';
 import { Expose, Transform, Type } from 'class-transformer';
 import { BaseModel } from '../base.schema';
 import mongoose from 'mongoose';
@@ -17,9 +17,6 @@ export class MchgRound extends BaseModel {
   image: MchgImage;
 
   @ApiProperty({ description: "Round's questions", type: [MchgQuestion] })
-  @IsArray()
-  @ArrayMinSize(6)
-  @ArrayMaxSize(6)
   @ValidateNested({ each: true })
   @Type(() => MchgQuestion)
   @Expose({ groups: [UserRole.ADMIN] })
