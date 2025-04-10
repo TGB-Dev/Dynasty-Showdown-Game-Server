@@ -160,7 +160,7 @@ export class MchgController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   async requestToAnswerMainQuestion(@Req() { user }: AuthRequest) {
-    await this.mchgService.requestToAnswerMainQuestion(user.username);
+    await this.mchgService.requestAnswerMainQuestion(user);
   }
 
   @Post('mainQuestion/dequeue')
@@ -169,15 +169,15 @@ export class MchgController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   async mainQuestionDequeue() {
-    await this.mchgService.mainQuestionDequeue();
+    await this.mchgService.nextWaitingUserMainQuestion();
   }
 
-  @Post('mainQuestion/reward/:teamUsername')
-  @ApiOperation({ summary: 'Reward the team with correct main answer' })
+  @Post('mainQuestion/accept')
+  @ApiOperation({ summary: 'Reward the current team with correct main answer' })
   @ApiCreatedResponse({ description: 'Rewarded the team with correct main answer' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  async rewardMainQuestion(@Param() teamUsername: string) {
-    await this.mchgService.rewardMainQuestion(teamUsername);
+  async rewardMainQuestion() {
+    await this.mchgService.rewardMainQuestion();
   }
 }

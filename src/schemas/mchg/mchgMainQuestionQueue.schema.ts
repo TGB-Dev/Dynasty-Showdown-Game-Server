@@ -1,12 +1,11 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { User } from '../user.schema';
+import mongoose from 'mongoose';
 
-@Schema()
+@Schema({ timestamps: true })
 export class MchgMainQuestionQueue {
-  @Prop({ required: true })
-  teamUsername: string;
-
-  @Prop({ unique: true, required: true })
-  timestamp: number;
+  @Prop({ required: true, type: mongoose.Types.ObjectId, ref: User.name })
+  user: User;
 }
 
 export const MchgMainQuestionQueueSchema = SchemaFactory.createForClass(MchgMainQuestionQueue);

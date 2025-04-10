@@ -12,6 +12,9 @@ import { MchgQuestionRepository } from './mchg-question.repository';
 import { MchgQuestion, MchgQuestionSchema } from '../schemas/mchg/mchgQuestion.schema';
 import { MchgMainQuestionQueue, MchgMainQuestionQueueSchema } from '../schemas/mchg/mchgMainQuestionQueue.schema';
 import { MchgMainQuestionQueueRepository } from './mchg-main-question-queue.repository';
+import { MchgGameService } from './mchg-game.service';
+import { MchgTimerService } from './mchg-timer.service';
+import { MchgAnswerQueueService } from './mchg-answer-queue.service';
 
 @Module({
   imports: [
@@ -26,6 +29,9 @@ import { MchgMainQuestionQueueRepository } from './mchg-main-question-queue.repo
   providers: [
     MchgGateway,
     MchgService,
+    MchgGameService,
+    MchgTimerService,
+    MchgAnswerQueueService,
     MchgRoundRepository,
     MchgSubmissionRepository,
     MchgQuestionRepository,
