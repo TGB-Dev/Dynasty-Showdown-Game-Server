@@ -56,6 +56,50 @@ export class CdvqGameService {
     })();
   }
 
+  stopGame() {
+    if (this.gameState === CdvqGameState.NOT_PLAYING) {
+      throw new BadRequestException('Game already stopped');
+    }
+
+    this.endGame();
+    void this.timerService.stop();
+  }
+
+  pauseGame() {
+    if (this.gameState === CdvqGameState.PAUSED || this.gameState === CdvqGameState.NOT_PLAYING) {
+      throw new BadRequestException('Game already paused or not started');
+    }
+
+    this.gameState = CdvqGameState.PAUSED;
+    this.timerService.pause();
+    this.gateway.emitGamePaused();
+  }
+
+  resumeGame() {
+    if (this.gameState !== CdvqGameState.PAUSED) {
+      throw new BadRequestException('Game not paused');
+    }
+
+    this.gameState = CdvqGameState.PLAYING;
+    this.gateway.emitGameResumed();
+
+    void (async () => {
+      await this.timerService.resume();
+      switch (this.roundState) {
+        case CdvqRoundState.WAITING || CdvqRoundState.SHOWING_RESULT:
+          await this.startRound();
+          break;
+        case CdvqRoundState.ANSWERING:
+          await this.showAnswerPhase();
+          await this.showResultPhase();
+          break;
+        case CdvqRoundState.SHOWING_ANSWER:
+          await this.showResultPhase();
+          break;
+      }
+    })();
+  }
+
   private async startRound() {
     this.currentQuestion = (await this.questionRepository.getFirstWaiting())?.toObject() ?? null;
 

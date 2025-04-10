@@ -36,6 +36,18 @@ export class CdvqService {
     return this.gameService.startGame();
   }
 
+  stopGame() {
+    return this.gameService.stopGame();
+  }
+
+  pauseGame() {
+    return this.gameService.pauseGame();
+  }
+
+  resumeGame() {
+    return this.gameService.resumeGame();
+  }
+
   answerCurrentQuestion(user: User, answer: string) {
     return this.gameService.answerCurrentQuestion(user, answer);
   }

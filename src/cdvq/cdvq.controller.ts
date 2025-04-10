@@ -89,6 +89,36 @@ export class CdvqController {
     return this.cdvqService.startGame();
   }
 
+  @Post('game/stop')
+  @ApiOperation({ summary: 'Stop game' })
+  @ApiResponse({ status: 201, description: 'Game stopped successfully' })
+  @ApiResponse({ status: 400, description: 'Game stopped failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  stopGame() {
+    return this.cdvqService.stopGame();
+  }
+
+  @Post('game/pause')
+  @ApiOperation({ summary: 'Pause game' })
+  @ApiResponse({ status: 201, description: 'Game paused successfully' })
+  @ApiResponse({ status: 400, description: 'Game paused failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  pauseGame() {
+    return this.cdvqService.pauseGame();
+  }
+
+  @Post('game/resume')
+  @ApiOperation({ summary: 'Resume game' })
+  @ApiResponse({ status: 201, description: 'Game resumed successfully' })
+  @ApiResponse({ status: 400, description: 'Game resumed failed' })
+  @ApiResponse({ status: 500, description: 'Internal Server Error' })
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  resumeGame() {
+    return this.cdvqService.resumeGame();
+  }
+
   @Get('game/answer')
   @UseGuards(AuthGuard(UserRole.PLAYER, UserRole.ADMIN))
   @ApiOperation({ summary: 'Get current question answer' })
