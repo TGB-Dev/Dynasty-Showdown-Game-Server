@@ -185,7 +185,7 @@ export class MchgController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard())
   async getCurrentQuestionAnswer(@Req() { user }: AuthRequest) {
-    return await this.mchgService.getCurrentQuestionAnswer(user.username);
+    return await this.mchgService.getCurrentQuestionAnswer(user._id!);
   }
 
   @Post('mainQuestion/request')

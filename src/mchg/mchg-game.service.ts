@@ -9,6 +9,7 @@ import { User } from '../schemas/user.schema';
 import { MchgAnswerQueueService } from './mchg-answer-queue.service';
 import { UserRepository } from '../user/user.repository';
 import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
+import mongoose from 'mongoose';
 
 const MAIN_ANSWER_POINTS = 150;
 const SUB_ANSWER_POINTS = 15;
@@ -40,6 +41,7 @@ export class MchgGameService {
     this.gameState = MchgGameState.NOT_RUNNING;
     await this.questionRepository.reset();
     await this.answerQueueService.clear();
+    await this.submissionRepository.deleteAll();
   }
 
   async runGame() {
@@ -130,6 +132,7 @@ export class MchgGameService {
   private async showingSubQuestionAnswerPhase() {
     this.gateway.updateStage(MchgStage.SHOWING_SUB_QUESTION_ANSWER);
 
+    await this.markCurrentQuestionSolved();
     await this.timerService.start(SHOWING_ANSWER_DELAY_DURATION, (rem) => this.gateway.updateTimer(rem));
 
     this.roundStage = MchgStage.CHOOSING_QUESTION;
@@ -151,14 +154,35 @@ export class MchgGameService {
     await this.runRound();
   }
 
+  private async markCurrentQuestionSolved() {
+    const currentRound = await this.getCurrentRound();
+
+    if (!currentRound.currentQuestion) {
+      throw new BadRequestException('No currently running question');
+    }
+
+    const currentQuestionSubmissions = await this.submissionRepository.getAllByQuestionId(
+      currentRound.currentQuestion._id,
+    );
+
+    console.log(currentQuestionSubmissions);
+
+    const correctSubmissions = currentQuestionSubmissions.filter((submission) => this.isCorrect(submission.toObject()));
+
+    console.log(correctSubmissions);
+
+    if (correctSubmissions.length > 0) {
+      console.log(await this.questionRepository.updateSolved(currentRound.currentQuestion, true));
+    }
+  }
+
   async getCurrentRound() {
     if (this.gameState === MchgGameState.NOT_RUNNING) {
       throw new BadRequestException('Game is not running');
     }
 
     const round = await this.roundRepository.getByOrder(this.roundIndex);
-    const roundPopulated = await round.populate(['questions', 'currentQuestion'] as const);
-    return roundPopulated.toObject();
+    return (await round.populate(['questions', 'currentQuestion'] as const)).toObject();
   }
 
   private async getCurrentQuestion() {
@@ -168,7 +192,7 @@ export class MchgGameService {
       throw new BadRequestException('No current question');
     }
 
-    return (await this.questionRepository.findById(currentRound.currentQuestion))!;
+    return (await this.questionRepository.findById(currentRound.currentQuestion))!.toObject();
   }
 
   async submitAnswer(answer: string, user: User) {
@@ -177,9 +201,9 @@ export class MchgGameService {
     if (question === null) throw new BadRequestException('No current question');
 
     const submission = {
-      question,
+      question: question._id,
+      user: user._id,
       answer,
-      user,
     };
 
     return this.submissionRepository.create(submission);
@@ -263,10 +287,12 @@ export class MchgGameService {
     await this.submissionRepository.deleteAll();
   }
 
-  async getCurrentQuestionAnswer(teamUsername: string) {
-    const submission = await this.submissionRepository.findByUsername(teamUsername);
+  async getCurrentQuestionAnswer(userId: mongoose.Types.ObjectId) {
+    const currentQuestion = await this.getCurrentQuestion();
+    const submission = await this.submissionRepository.findByUserIdAndQuestionId(userId, currentQuestion._id);
+
     if (!submission) {
-      throw new NotFoundException(`Unable to find submission with username ${teamUsername}`);
+      throw new NotFoundException(`Unable to find submission with user ${userId.toHexString()}`);
     }
 
     return {
