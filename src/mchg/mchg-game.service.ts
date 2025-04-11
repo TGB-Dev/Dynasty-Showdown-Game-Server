@@ -12,10 +12,10 @@ import { UserRepository } from '../user/user.repository';
 const MAIN_ANSWER_POINTS = 150;
 const SUB_ANSWER_POINTS = 15;
 const ROUND_COUNT = 3;
-const SHOWING_ANSWER_DELAY_DURATION = 2;
-const SHOWING_ROUND_RESULT_DURATION = 2;
+const SHOWING_ANSWER_DELAY_DURATION = 10;
+const SHOWING_ROUND_RESULT_DURATION = 15;
 const ROUND_DELAY_DURATION = 5;
-const ANSWERING_SUB_QUESTION_DURATION = 2;
+const ANSWERING_SUB_QUESTION_DURATION = 30;
 
 @Injectable()
 export class MchgGameService {
