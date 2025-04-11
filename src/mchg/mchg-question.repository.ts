@@ -16,8 +16,8 @@ export class MchgQuestionRepository {
     return Promise.all(questions.map((question) => this.create(question)));
   }
 
-  findById(id: string | mongoose.Types.ObjectId): Promise<MchgQuestion | null> {
-    return this.mchgQuestionModel.findById(id).exec();
+  async findById(id: string | mongoose.Types.ObjectId): Promise<MchgQuestion | null> {
+    return (await this.mchgQuestionModel.findById(id).exec())?.toObject() ?? null;
   }
 
   async updateSelected(id: string | mongoose.Types.ObjectId, selected: boolean): Promise<MchgQuestion | null> {

@@ -44,6 +44,7 @@ export class MchgGameService {
 
   async runGame() {
     await this.reset();
+    this.gameState = MchgGameState.RUNNING;
 
     void (async () => {
       await this.timerService.start(3, (rem) => this.gateway.updateRunGameTimer(rem));
