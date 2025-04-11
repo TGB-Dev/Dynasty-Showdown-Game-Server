@@ -32,8 +32,8 @@ export class RokController {
   })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('game/run')
-  async runRound() {
-    return await this.rokService.runGame();
+  runRound() {
+    return this.rokService.runGame();
   }
 
   @ApiOperation({ summary: 'Pause the game.' })
