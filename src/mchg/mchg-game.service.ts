@@ -165,14 +165,10 @@ export class MchgGameService {
       currentRound.currentQuestion._id,
     );
 
-    console.log(currentQuestionSubmissions);
-
     const correctSubmissions = currentQuestionSubmissions.filter((submission) => this.isCorrect(submission.toObject()));
 
-    console.log(correctSubmissions);
-
     if (correctSubmissions.length > 0) {
-      console.log(await this.questionRepository.updateSolved(currentRound.currentQuestion, true));
+      await this.questionRepository.updateSolved(currentRound.currentQuestion, true);
     }
   }
 
