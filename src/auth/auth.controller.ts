@@ -11,6 +11,7 @@ export class AuthController {
   @ApiResponse({ status: '2XX', type: SignInResDto })
   @ApiResponse({ status: '4XX', description: 'When the user credentials are invalid.' })
   async signIn(@Body() user: SignInReqDto): Promise<SignInResDto> {
+    console.log(user);
     return await this.authService.signIn(user);
   }
 }
