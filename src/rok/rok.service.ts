@@ -186,8 +186,7 @@ export class RokService implements OnModuleDestroy {
     }
 
     await this.rokRepository.createAttack(teamUsername, cityId);
-    const updatedAttacks = await this.rokRepository.getAttacks();
-    this.rokGateway.updateAttacks(updatedAttacks);
+    this.rokGateway.updateAttacks();
   }
 
   async deleteAttack(teamUsername: string, cityId: number) {
@@ -196,8 +195,7 @@ export class RokService implements OnModuleDestroy {
     }
 
     await this.rokRepository.deleteAttack(teamUsername, cityId);
-    const updatedAttacks = await this.rokRepository.getAttacks();
-    this.rokGateway.updateAttacks(updatedAttacks);
+    this.rokGateway.updateAttacks();
   }
 
   async createQuestion(newQuestion: NewRokQuestionDto) {
@@ -222,6 +220,10 @@ export class RokService implements OnModuleDestroy {
 
   async getMatrix() {
     return await this.rokRepository.getMatrix();
+  }
+
+  async getAttacks() {
+    return await this.rokRepository.getAttacks();
   }
 
   onModuleDestroy() {

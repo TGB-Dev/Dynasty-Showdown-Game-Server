@@ -9,7 +9,7 @@ import { RokGateway } from './rok.gateway';
 
 @ApiTags('Rise of Kingdom')
 @ApiBearerAuth()
-@ApiResponse({ status: 401, description: 'You are not authorized to do the specified operation.' })
+@ApiResponse({ status: 401, description: 'Unauthorized.' })
 @ApiResponse({ status: 200, description: 'OK.' })
 @ApiResponse({ status: 500, description: 'Internal Server Error.' })
 @Controller('rok')
@@ -69,6 +69,13 @@ export class RokController {
   @Get('attack/remove/:cityId')
   async deleteAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
     await this.rokService.deleteAttack(req.user.username, cityId);
+  }
+
+  @ApiOperation({ summary: 'Get attacks of the current round.' })
+  @UseGuards(AuthGuard())
+  @Get('attacks')
+  async getAttacks() {
+    await this.rokService.getAttacks();
   }
 
   @ApiOperation({ summary: 'Answer the question with `questionId`.' })
