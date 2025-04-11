@@ -79,7 +79,7 @@ export class MchgGameService {
         break;
 
       case MchgStage.ANSWERING_MAIN_QUESTION:
-        await this.answeringMainAnswerPhase();
+        this.answeringMainAnswerPhase();
         break;
 
       case MchgStage.ANSWERING_SUB_QUESTION:
@@ -108,19 +108,20 @@ export class MchgGameService {
     }
   }
 
-  private async answeringMainAnswerPhase() {
+  private answeringMainAnswerPhase() {
     this.gateway.updateStage(MchgStage.ANSWERING_MAIN_QUESTION);
 
     this.timerService.pause();
-
-    this.roundStage = MchgStage.ANSWERING_SUB_QUESTION;
-    await this.runRound();
   }
 
   private async answeringSubQuestionPhase() {
     this.gateway.updateStage(MchgStage.ANSWERING_SUB_QUESTION);
 
-    await this.timerService.start(ANSWERING_SUB_QUESTION_DURATION, (rem) => this.gateway.updateTimer(rem));
+    if (this.timerService.isPaused()) {
+      await this.timerService.resume();
+    } else {
+      await this.timerService.start(ANSWERING_SUB_QUESTION_DURATION, (rem) => this.gateway.updateTimer(rem));
+    }
 
     this.roundStage = MchgStage.SHOWING_SUB_QUESTION_ANSWER;
     await this.runRound();
@@ -185,11 +186,18 @@ export class MchgGameService {
   }
 
   async requestAnswerMainQuestion(user: User) {
-    switch (this.roundStage) {
-      case MchgStage.ANSWERING_SUB_QUESTION:
-      case MchgStage.ANSWERING_MAIN_QUESTION:
-        await this.answerQueueService.enqueue(user);
+    if (this.roundStage === MchgStage.SHOWING_ROUND_RESULT) {
+      throw new BadRequestException('Cannot request main question answer at this time');
     }
+
+    await this.answerQueueService.enqueue(user);
+
+    if (this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) return;
+
+    const lastStage = this.roundStage;
+    this.roundStage = MchgStage.ANSWERING_MAIN_QUESTION;
+    await this.runRound();
+    this.roundStage = lastStage;
   }
 
   async nextWaitingUserMainQuestion() {
