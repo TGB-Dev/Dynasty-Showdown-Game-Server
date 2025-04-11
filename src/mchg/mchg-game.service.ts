@@ -1,0 +1,265 @@
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { MchgTimerService } from './mchg-timer.service';
+import { MchgGateway } from './mchg.gateway';
+import { MchgGameState, MchgStage } from '../common/enum/mchg/mchgStage.enum';
+import { MchgRoundRepository } from './mchg-round.repository';
+import { MchgQuestionRepository } from './mchg-question.repository';
+import { MchgSubmissionRepository } from './mchg-submission.repository';
+import { User } from '../schemas/user.schema';
+import { MchgAnswerQueueService } from './mchg-answer-queue.service';
+import { UserRepository } from '../user/user.repository';
+import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
+
+const MAIN_ANSWER_POINTS = 150;
+const SUB_ANSWER_POINTS = 15;
+const ROUND_COUNT = 3;
+const SHOWING_ANSWER_DELAY_DURATION = 10;
+const SHOWING_ROUND_RESULT_DURATION = 15;
+const ROUND_DELAY_DURATION = 5;
+const ANSWERING_SUB_QUESTION_DURATION = 30;
+
+@Injectable()
+export class MchgGameService {
+  constructor(
+    private readonly timerService: MchgTimerService,
+    private readonly gateway: MchgGateway,
+    private readonly roundRepository: MchgRoundRepository,
+    private readonly questionRepository: MchgQuestionRepository,
+    private readonly submissionRepository: MchgSubmissionRepository,
+    private readonly answerQueueService: MchgAnswerQueueService,
+    private readonly userRepository: UserRepository,
+  ) {}
+
+  private roundIndex: number = 0;
+  private roundStage: MchgStage = MchgStage.CHOOSING_QUESTION;
+  private gameState = MchgGameState.NOT_RUNNING;
+
+  async reset() {
+    this.roundIndex = 0;
+    this.roundStage = MchgStage.CHOOSING_QUESTION;
+    this.gameState = MchgGameState.NOT_RUNNING;
+    await this.questionRepository.reset();
+    await this.answerQueueService.clear();
+  }
+
+  async runGame() {
+    await this.reset();
+    this.gameState = MchgGameState.RUNNING;
+
+    void (async () => {
+      await this.timerService.start(3, (rem) => this.gateway.updateRunGameTimer(rem));
+      void this.runRound();
+    })();
+  }
+
+  pauseGame() {
+    this.timerService.pause();
+    this.gameState = MchgGameState.PAUSED;
+    this.gateway.pauseGame();
+  }
+
+  resumeGame() {
+    this.gameState = MchgGameState.RUNNING;
+    this.gateway.resumeGame();
+
+    void this.runRound();
+    this.timerService.resume();
+  }
+
+  private async runRound() {
+    if (this.roundIndex >= ROUND_COUNT) {
+      this.gameState = MchgGameState.NOT_RUNNING;
+      this.gateway.endGame();
+      return;
+    }
+
+    switch (this.roundStage) {
+      case MchgStage.CHOOSING_QUESTION:
+        await this.choosingQuestionPhase();
+        break;
+
+      case MchgStage.ANSWERING_MAIN_QUESTION:
+        await this.answeringMainAnswerPhase();
+        break;
+
+      case MchgStage.ANSWERING_SUB_QUESTION:
+        await this.answeringSubQuestionPhase();
+        break;
+
+      case MchgStage.SHOWING_SUB_QUESTION_ANSWER:
+        await this.showingSubQuestionAnswerPhase();
+        break;
+
+      case MchgStage.SHOWING_ROUND_RESULT:
+        await this.showingRoundResultPhase();
+        break;
+    }
+  }
+
+  private async choosingQuestionPhase() {
+    this.gateway.updateStage(MchgStage.CHOOSING_QUESTION);
+
+    const currentRound = await this.roundRepository.getByOrder(this.roundIndex);
+    const availableQuestions = currentRound.questions.filter((question) => !question.selected);
+
+    if (availableQuestions.length === 0) {
+      this.roundStage = MchgStage.SHOWING_ROUND_RESULT;
+      await this.runRound();
+    }
+  }
+
+  private async answeringMainAnswerPhase() {
+    this.gateway.updateStage(MchgStage.ANSWERING_MAIN_QUESTION);
+
+    this.timerService.pause();
+
+    this.roundStage = MchgStage.ANSWERING_SUB_QUESTION;
+    await this.runRound();
+  }
+
+  private async answeringSubQuestionPhase() {
+    this.gateway.updateStage(MchgStage.ANSWERING_SUB_QUESTION);
+
+    await this.timerService.start(ANSWERING_SUB_QUESTION_DURATION, (rem) => this.gateway.updateTimer(rem));
+
+    this.roundStage = MchgStage.SHOWING_SUB_QUESTION_ANSWER;
+    await this.runRound();
+  }
+
+  private async showingSubQuestionAnswerPhase() {
+    this.gateway.updateStage(MchgStage.SHOWING_SUB_QUESTION_ANSWER);
+
+    await this.timerService.start(SHOWING_ANSWER_DELAY_DURATION, (rem) => this.gateway.updateTimer(rem));
+
+    this.roundStage = MchgStage.CHOOSING_QUESTION;
+    await this.runRound();
+  }
+
+  private async showingRoundResultPhase() {
+    await this.updateScores();
+
+    this.gateway.updateStage(MchgStage.SHOWING_ROUND_RESULT);
+
+    await this.timerService.start(SHOWING_ROUND_RESULT_DURATION, (rem) => this.gateway.updateTimer(rem));
+
+    this.roundIndex++;
+    this.roundStage = MchgStage.CHOOSING_QUESTION;
+
+    await this.timerService.start(ROUND_DELAY_DURATION, (rem) => this.gateway.updateTimer(rem));
+
+    await this.runRound();
+  }
+
+  async getCurrentRound() {
+    if (this.gameState === MchgGameState.NOT_RUNNING) {
+      throw new BadRequestException('Game is not running');
+    }
+
+    const round = await this.roundRepository.getByOrder(this.roundIndex);
+    const roundPopulated = await round.populate(['questions', 'currentQuestion'] as const);
+    return roundPopulated.toObject();
+  }
+
+  private async getCurrentQuestion() {
+    const currentRound = await this.getCurrentRound();
+
+    if (!currentRound.currentQuestion) {
+      throw new BadRequestException('No current question');
+    }
+
+    return (await this.questionRepository.findById(currentRound.currentQuestion))!;
+  }
+
+  async submitAnswer(answer: string, user: User) {
+    const question = await this.getCurrentQuestion();
+
+    if (question === null) throw new BadRequestException('No current question');
+
+    const submission = {
+      question,
+      answer,
+      user,
+    };
+
+    return this.submissionRepository.create(submission);
+  }
+
+  async requestAnswerMainQuestion(user: User) {
+    switch (this.roundStage) {
+      case MchgStage.ANSWERING_SUB_QUESTION:
+      case MchgStage.ANSWERING_MAIN_QUESTION:
+        await this.answerQueueService.enqueue(user);
+    }
+  }
+
+  async nextWaitingUserMainQuestion() {
+    await this.answerQueueService.dequeue();
+
+    if ((await this.answerQueueService.length()) === 0) {
+      void this.runRound();
+    }
+  }
+
+  async acceptCurrentUserMainQuestionAnswer() {
+    const queueItem = await this.answerQueueService.top();
+
+    if (!queueItem) {
+      throw new BadRequestException('No user in queue');
+    }
+
+    const user = queueItem.user;
+    await this.userRepository.increaseScore(user._id!, MAIN_ANSWER_POINTS);
+    await this.answerQueueService.clear();
+
+    void this.runRound();
+  }
+
+  async selectQuestion(index: number) {
+    if (this.roundStage === MchgStage.ANSWERING_SUB_QUESTION || this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) {
+      throw new BadRequestException('Question is already running');
+    }
+
+    const currentRound = await this.getCurrentRound();
+    const question = currentRound.questions[index];
+
+    if (question.selected) throw new BadRequestException('Question already selected');
+
+    await this.questionRepository.updateSelected(question._id, true);
+
+    currentRound.currentQuestion = question._id;
+    await this.roundRepository.update(currentRound._id, currentRound);
+
+    this.gateway.broadcastQuestion(question);
+    this.roundStage = MchgStage.ANSWERING_SUB_QUESTION;
+
+    void this.runRound();
+  }
+
+  private isCorrect(submission: MchgSubmission) {
+    return submission.answer.trim().toLowerCase() === submission.question.answer.trim().toLowerCase();
+  }
+
+  private async updateScores() {
+    const submissions = await this.submissionRepository.getAll();
+
+    for (const submission of submissions) {
+      if (this.isCorrect(submission)) {
+        this.userRepository.increaseScore(submission.user._id!, SUB_ANSWER_POINTS);
+      }
+    }
+
+    await this.submissionRepository.deleteAll();
+  }
+
+  async getCurrentQuestionAnswer(teamUsername: string) {
+    const submission = await this.submissionRepository.findByUsername(teamUsername);
+    if (!submission) {
+      throw new NotFoundException(`Unable to find submission with username ${teamUsername}`);
+    }
+
+    return {
+      ...submission,
+      isCorrect: this.isCorrect(submission),
+    };
+  }
+}
