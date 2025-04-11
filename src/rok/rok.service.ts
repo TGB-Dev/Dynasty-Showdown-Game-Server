@@ -1,16 +1,18 @@
-import { Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException, OnModuleDestroy } from '@nestjs/common';
 import { RokRepository } from './rok.repository';
 import { RokGateway } from './rok.gateway';
 import { NewRokQuestionDto, RokAnswerQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
 import { RokStage } from '../common/enum/rok/rokStage.enum';
 import { UserRepository } from '../user/user.repository';
+import { RokTimerService } from './rok-timer.service';
+
+const CHOOSE_CITY_TIMEOUT = 20;
+const ATTACK_TIMEOUT = 40;
+const DEFEND_TIMEOUT = 40;
+const UPDATE_RESULTS_TIMEOUT = 40;
 
 @Injectable()
 export class RokService implements OnModuleDestroy {
-  private remainingTime = 0;
-  private interval: NodeJS.Timeout | null = null;
-  private timerIsRunning: boolean = false;
-
   private lastStage: RokStage = RokStage.PAUSED;
   private currentStage: RokStage = RokStage.CHOOSE_CITY;
 
@@ -18,6 +20,7 @@ export class RokService implements OnModuleDestroy {
   private currentRound: number = 0;
 
   constructor(
+    private readonly timerService: RokTimerService,
     private readonly rokRepository: RokRepository,
     private readonly rokGateway: RokGateway,
     private readonly userRepository: UserRepository,
@@ -25,18 +28,20 @@ export class RokService implements OnModuleDestroy {
 
   runGame() {
     void (async () => {
-      await this.startTimer(3, (rem) => this.rokGateway.updateRunGameTimer(rem));
+      await this.timerService.start(3, (rem) => this.rokGateway.updateRunGameTimer(rem));
       void this.runRound();
     })();
   }
 
   pauseGame() {
+    void this.timerService.pause();
     this.lastStage = this.currentStage;
     this.currentStage = RokStage.PAUSED;
     this.rokGateway.pauseGame();
   }
 
   resumeGame() {
+    void this.timerService.resume();
     this.currentStage = this.lastStage;
     this.lastStage = RokStage.PAUSED;
     this.rokGateway.resumeGame();
@@ -56,7 +61,7 @@ export class RokService implements OnModuleDestroy {
 
     if (this.currentStage === RokStage.CHOOSE_CITY) {
       this.rokGateway.updateStage(this.currentStage);
-      await this.startTimer(20, (rem) => this.rokGateway.updateTimer(rem));
+      await this.timerService.start(CHOOSE_CITY_TIMEOUT, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
       this.currentStage = RokStage.ATTACK;
@@ -66,8 +71,8 @@ export class RokService implements OnModuleDestroy {
     if (this.currentStage === RokStage.ATTACK) {
       this.rokGateway.updateStage(this.currentStage);
       const attackingTeams = await this.rokRepository.getAttackingTeams();
-      await this.sendQuestions(attackingTeams);
-      await this.startTimer(40, (rem) => this.rokGateway.updateTimer(rem));
+      this.sendGetQuestionSignal(attackingTeams);
+      await this.timerService.start(ATTACK_TIMEOUT, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
       this.currentStage = RokStage.DEFEND;
@@ -77,8 +82,8 @@ export class RokService implements OnModuleDestroy {
     if (this.currentStage === RokStage.DEFEND) {
       this.rokGateway.updateStage(this.currentStage);
       const teams = await this.userRepository.getTeamUsernames();
-      await this.sendQuestions(teams);
-      await this.startTimer(40, (rem) => this.rokGateway.updateTimer(rem));
+      this.sendGetQuestionSignal(teams);
+      await this.timerService.start(DEFEND_TIMEOUT, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
       this.currentStage = RokStage.UPDATE_RESULTS;
@@ -92,7 +97,7 @@ export class RokService implements OnModuleDestroy {
 
       this.rokGateway.updateMatrix();
 
-      await this.startTimer(40, (rem) => this.rokGateway.updateTimer(rem));
+      await this.timerService.start(UPDATE_RESULTS_TIMEOUT, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
       this.currentStage = RokStage.CHOOSE_CITY;
@@ -101,88 +106,81 @@ export class RokService implements OnModuleDestroy {
     }
   }
 
-  async startTimer(durationInSeconds: number, broadcastFunction: (remainingTimeInSeconds: number) => void) {
-    if (this.timerIsRunning) {
-      return;
-    }
-
-    this.remainingTime = durationInSeconds;
-    this.timerIsRunning = true;
-
-    return new Promise<void>((resolve) => {
-      this.interval = setInterval(() => {
-        if (this.remainingTime <= 0) {
-          this.stopTimer();
-          resolve();
-          return;
-        }
-
-        this.remainingTime--;
-        broadcastFunction(this.remainingTime);
-      }, 1000);
-    });
-  }
-
-  stopTimer() {
-    if (this.interval) {
-      clearInterval(this.interval);
-      this.interval = null;
-    }
-
-    this.timerIsRunning = false;
-  }
-
   async answerQuestion(questionId: string, teamUsername: string, dto: RokAnswerQuestionDto) {
     const question = await this.rokRepository.getQuestionById(questionId);
     if (!question) {
       throw new NotFoundException();
     }
 
-    if (!this.timerIsRunning) {
-      return;
+    if (question.teamUsername !== teamUsername) {
+      throw new BadRequestException("Wrong team's question.");
+    }
+
+    if (!this.timerService.timerIsRunning()) {
+      return false;
     }
 
     if (this.currentStage !== RokStage.ATTACK && this.currentStage !== RokStage.DEFEND) {
-      return;
+      return false;
     }
 
     if (this.currentStage === RokStage.ATTACK) {
       if (question.isMultiple) {
         if (question.correctChoiceIndex !== dto.choiceIndex) {
           await this.rokRepository.deleteAttacksOnIncorrectAnswer(teamUsername);
+          return false;
         } else {
           await this.rokRepository.markAttackAsSucceeded(teamUsername);
+          return true;
         }
       } else {
         if (question.answer !== dto.answer) {
           await this.rokRepository.deleteAttacksOnIncorrectAnswer(teamUsername);
+          return false;
         } else {
           await this.rokRepository.markAttackAsSucceeded(teamUsername);
+          return true;
         }
       }
     } else if (this.currentStage === RokStage.DEFEND) {
       if (question.isMultiple) {
         if (question.correctChoiceIndex === dto.choiceIndex) {
           await this.rokRepository.defendOnCorrectAnswer(teamUsername);
+          return true;
         }
       } else {
         if (question.answer === dto.answer) {
           await this.rokRepository.defendOnCorrectAnswer(teamUsername);
+          return true;
         }
       }
     }
+
+    return false;
   }
 
-  async sendQuestions(teams: string[]) {
+  private async getCurrentQuestionForTeam(teamUsername: string) {
+    return await this.rokRepository.getCurrentQuestionForTeam(teamUsername, this.currentRound);
+  }
+
+  async getQuestionForTeam(teamUsername: string) {
+    const currentQuestion = await this.getCurrentQuestionForTeam(teamUsername);
+    if (!currentQuestion) {
+      return this.rokRepository.getRandomQuestion(teamUsername);
+    }
+
+    return currentQuestion;
+  }
+
+  sendGetQuestionSignal(teams: string[]) {
     for (const team of teams) {
-      const question = await this.rokRepository.getRandomQuestion();
-      this.rokGateway.sendQuestion(team, question);
+      this.rokGateway.sendQuestion(team);
     }
   }
 
   async createAttack(teamUsername: string, cityId: number) {
-    if (!(this.timerIsRunning && this.currentStage === RokStage.ATTACK)) {
-      return;
+    if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.ATTACK)) {
+      throw new BadRequestException('Attack stage ended.');
     }
 
     await this.rokRepository.createAttack(teamUsername, cityId);
@@ -190,8 +188,8 @@ export class RokService implements OnModuleDestroy {
   }
 
   async deleteAttack(teamUsername: string, cityId: number) {
-    if (!(this.timerIsRunning && this.currentStage === RokStage.ATTACK)) {
-      return;
+    if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.ATTACK)) {
+      throw new BadRequestException('Attack stage ended.');
     }
 
     await this.rokRepository.deleteAttack(teamUsername, cityId);
@@ -227,6 +225,6 @@ export class RokService implements OnModuleDestroy {
   }
 
   onModuleDestroy() {
-    this.stopTimer();
+    this.timerService.stop();
   }
 }

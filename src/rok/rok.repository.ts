@@ -69,26 +69,34 @@ export class RokRepository {
     await this.rokQuestionModel.findByIdAndDelete(id, { new: true }).exec();
   }
 
-  async getRandomQuestion() {
-    let ok = false;
-    let selectedQuestion: RokQuestion | null = null;
-    while (!ok) {
-      const fetchedQuestion = await this.rokQuestionModel.aggregate([{ $sample: { size: 1 } }]).exec();
-      selectedQuestion = await this.rokQuestionModel
-        .findOneAndUpdate(
-          {
-            // @ts-expect-error The aggregation pipeline doesn't recognize the document's type
-            _id: fetchedQuestion._id,
-            selected: false,
-          },
-          { selected: true },
-          { new: true },
-        )
-        .exec();
-      ok = selectedQuestion !== null;
+  async getRandomQuestion(teamUsername: string) {
+    const fetchedQuestion = await this.rokQuestionModel
+      .aggregate([
+        {
+          $match: { selected: false },
+          $sample: { size: 1 },
+        },
+      ])
+      .exec();
+
+    if (!fetchedQuestion) {
+      throw new NotFoundException('No more questions found.');
     }
 
-    return selectedQuestion!;
+    return (await this.rokQuestionModel
+      .findOneAndUpdate(
+        {
+          // @ts-expect-error The aggregation pipeline doesn't recognize the document's type
+          _id: fetchedQuestion._id,
+        },
+        { selected: true, teamUsername },
+        { new: true },
+      )
+      .exec())!;
+  }
+
+  async getCurrentQuestionForTeam(teamUsername: string, round: number) {
+    return await this.rokQuestionModel.findOne({ teamUsername, round }).exec();
   }
 
   async getAttacks() {

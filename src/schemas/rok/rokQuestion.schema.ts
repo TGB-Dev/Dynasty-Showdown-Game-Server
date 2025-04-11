@@ -41,6 +41,20 @@ export class RokQuestion extends BaseModel {
   @ApiProperty({ description: 'Whether the question is already chosen or not.' })
   @Prop()
   selected: boolean;
+
+  @ApiProperty({ description: 'The team to answer the question.' })
+  @Prop({
+    // @ts-expect-error `this` should be specified
+    required: () => this.selected === true,
+  })
+  teamUsername?: string;
+
+  @ApiProperty({ description: 'The round in which this question is selected.' })
+  @Prop({
+    // @ts-expect-error `this` should be specified
+    required: () => this.selected === true,
+  })
+  round?: number;
 }
 
 export const RokQuestionSchema = SchemaFactory.createForClass(RokQuestion);

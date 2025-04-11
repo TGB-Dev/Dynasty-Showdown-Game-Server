@@ -1,11 +1,10 @@
 import { Body, Controller, Delete, Get, Param, Post, Put, Request, UseGuards } from '@nestjs/common';
 import { RokService } from './rok.service';
-import { NewRokQuestionDto, RokAnswerQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
+import { NewRokQuestionDto, RokAnswerQuestionDto, SendRokQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
 import { AuthGuard } from '../guards/auth.guard';
 import { UserRole } from '../common/enum/roles.enum';
-import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiOkResponse, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthRequest } from '../common/interfaces/request.interface';
-import { RokGateway } from './rok.gateway';
 
 @ApiTags('Rise of Kingdom')
 @ApiBearerAuth()
@@ -14,10 +13,7 @@ import { RokGateway } from './rok.gateway';
 @ApiResponse({ status: 500, description: 'Internal Server Error.' })
 @Controller('rok')
 export class RokController {
-  constructor(
-    private readonly rokService: RokService,
-    private readonly rokGateway: RokGateway,
-  ) {}
+  constructor(private readonly rokService: RokService) {}
 
   @ApiOperation({ summary: 'Resume the game.' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
@@ -43,20 +39,6 @@ export class RokController {
     return this.rokService.pauseGame();
   }
 
-  @ApiOperation({ summary: 'Start the internal timer.' })
-  @UseGuards(AuthGuard(UserRole.ADMIN))
-  @Get('timer/start/:duration')
-  async startTimer(@Param('duration') durationInSeconds: number) {
-    await this.rokService.startTimer(durationInSeconds, (rem) => this.rokGateway.updateTimer(rem));
-  }
-
-  @ApiOperation({ summary: 'End the internal timer.' })
-  @UseGuards(AuthGuard(UserRole.ADMIN))
-  @Get('timer/stop')
-  stopTimer() {
-    return this.rokService.stopTimer();
-  }
-
   @ApiOperation({ summary: 'Create an attack on `cityId`.' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @Get('attack/create/:cityId')
@@ -76,6 +58,14 @@ export class RokController {
   @Get('attacks')
   async getAttacks() {
     await this.rokService.getAttacks();
+  }
+
+  @ApiOperation({ summary: 'Get the question for the team.' })
+  @ApiOkResponse({ description: 'OK.', type: SendRokQuestionDto })
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  @Get('questions/team')
+  async getQuestionForTeam(@Request() req: AuthRequest) {
+    return await this.rokService.getQuestionForTeam(req.user.username);
   }
 
   @ApiOperation({ summary: 'Answer the question with `questionId`.' })
