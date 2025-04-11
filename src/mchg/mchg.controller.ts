@@ -4,8 +4,10 @@ import {
   Get,
   Param,
   Post,
+  Query,
   Req,
   SerializeOptions,
+  StreamableFile,
   UploadedFile,
   UseGuards,
   UseInterceptors,
@@ -38,6 +40,9 @@ import { UserRole } from '../common/enum/roles.enum';
 import { AuthRequest } from '../common/interfaces/request.interface';
 import { RoleBasedClassSerializer } from '../common/interceptors/role-based-class-serializer';
 import { MchgQuestion } from '../schemas/mchg/mchgQuestion.schema';
+import { createReadStream } from 'fs';
+import { join } from 'path';
+import mime from 'mime-types';
 
 @ApiTags('Mật chiếu hoàng gia')
 @ApiBearerAuth()
@@ -95,6 +100,18 @@ export class MchgController {
     @Body() body: CreateRoundReqDto,
   ): Promise<CreateRoundResDto> {
     return this.mchgService.createRound({ ...body, image });
+  }
+
+  @Get('image')
+  @ApiOperation({ summary: 'Get the image' })
+  @ApiOkResponse({ description: 'Returns the image' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  getImage(@Query('filename') filename: string) {
+    const file = createReadStream(join(globalConfigs.assetsRoot, filename));
+    // @ts-expect-error Some weird TS definitions
+    return new StreamableFile(file, {
+      type: mime.lookup(filename),
+    });
   }
 
   @Get('rounds')
