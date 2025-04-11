@@ -113,6 +113,7 @@ export class MchgController {
   @UseInterceptors(RoleBasedClassSerializer)
   @SerializeOptions({
     type: GetCurrentRoundResDto,
+    excludeExtraneousValues: true,
   })
   async getCurrentRound(): Promise<GetCurrentRoundResDto> {
     return await this.mchgService.getCurrentRound();

@@ -4,7 +4,7 @@ import { Room } from '../common/enum/room.enum';
 import { MchgStage } from '../common/enum/mchg/mchgStage.enum';
 import { MchgQuestion } from '../schemas/mchg/mchgQuestion.schema';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class MchgGateway {
   @WebSocketServer() server: Server;
 

@@ -2,7 +2,7 @@ import { PickType } from '@nestjs/swagger';
 import { MchgRound } from '../schemas/mchg/mchgRound.schema';
 import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
 import { MchgQuestion } from '../schemas/mchg/mchgQuestion.schema';
-import { Expose } from 'class-transformer';
+import { Expose, Type } from 'class-transformer';
 import { UserRole } from '../common/enum/roles.enum';
 
 export class CreateRoundReqDto extends PickType(MchgRound, ['order', 'questions', 'image', 'answer'] as const) {}
@@ -30,6 +30,7 @@ export class GetCurrentRoundResDto extends PickType(MchgRound, [
   'answer',
 ] as const) {
   @Expose()
+  @Type(() => QuestionDto)
   questions: QuestionDto[];
 }
 
