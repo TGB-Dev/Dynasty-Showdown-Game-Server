@@ -12,16 +12,12 @@ export class CdvqSubmissionRepository {
     return submission.save();
   }
 
-  findByUserId(userId: mongoose.Types.ObjectId): Promise<CdvqSubmission[]> {
-    return this.cdvqSubmissionModel.find({ user: userId }).exec();
-  }
-
   updateScore(id: string | CdvqSubmission | ObjectId, score: number) {
     return this.cdvqSubmissionModel.findByIdAndUpdate(id, { $set: { score } }, { new: true }).exec();
   }
 
-  getAll(): Promise<CdvqSubmission[]> {
-    return this.cdvqSubmissionModel.find().populate('question').exec();
+  getAll() {
+    return this.cdvqSubmissionModel.find().populate(['question', 'user']).exec();
   }
 
   deleteAll() {

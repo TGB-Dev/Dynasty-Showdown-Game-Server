@@ -108,6 +108,7 @@ export class CdvqGameService {
       return;
     }
 
+    await this.submissionRepository.deleteAll();
     await this.showQuestionPhase();
     await this.showAnswerPhase();
     await this.showResultPhase();
@@ -177,7 +178,6 @@ export class CdvqGameService {
     await Promise.all(
       questions.map((question) => this.questionRepository.updateStatus(question, CdvqQuestionStatus.WAITING)),
     );
-    await this.submissionRepository.deleteAll();
   }
 
   getCurrentQuestion() {
