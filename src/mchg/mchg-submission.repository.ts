@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
-import { Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { UserRepository } from '../user/user.repository';
 
 @Injectable()
@@ -11,7 +11,7 @@ export class MchgSubmissionRepository {
     private readonly userRepository: UserRepository,
   ) {}
 
-  create(submission: MchgSubmission): Promise<MchgSubmission> {
+  create(submission: any): Promise<MchgSubmission> {
     const newSubmission = new this.mchgSubmissionModel(submission);
     return newSubmission.save();
   }
@@ -24,12 +24,14 @@ export class MchgSubmissionRepository {
     return this.mchgSubmissionModel.deleteMany({}).exec();
   }
 
-  async findByUsername(username: string) {
-    const user = await this.userRepository.findUserByUsername(username);
-    if (!user) {
-      throw new NotFoundException(`User with username ${username} does not exist`);
-    }
+  async findByUserIdAndQuestionId(userId: mongoose.Types.ObjectId, questionId: mongoose.Types.ObjectId) {
+    return (
+      await this.mchgSubmissionModel.findOne({ user: userId, question: questionId }).populate('question').exec()
+    )?.toObject();
+  }
 
-    return await this.mchgSubmissionModel.findOne({ user: user }).populate('question').exec();
+  async getAllByQuestionId(questionId: mongoose.Types.ObjectId) {
+    console.log(questionId);
+    return this.mchgSubmissionModel.find({ question: questionId }).populate('question').exec();
   }
 }

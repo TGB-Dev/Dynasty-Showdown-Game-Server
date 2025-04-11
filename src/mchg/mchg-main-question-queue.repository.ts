@@ -25,7 +25,7 @@ export class MchgMainQuestionQueueRepository {
   }
 
   getAll() {
-    return this.mchgMainAnswerQueueModel.find({}).sort({ created_at: 'asc' }).exec();
+    return this.mchgMainAnswerQueueModel.find({}).populate('user').sort({ created_at: 'asc' }).exec();
   }
 
   deleteAll() {
