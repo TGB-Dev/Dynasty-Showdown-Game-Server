@@ -119,4 +119,11 @@ export class RokController {
   async deleteQuestion(@Param('id') id: string) {
     return await this.rokService.deleteQuestion(id);
   }
+
+  @ApiOperation({ summary: 'Get the matrix' })
+  @UseGuards(AuthGuard())
+  @Get('matrix')
+  async getMatrix() {
+    return await this.rokService.getMatrix();
+  }
 }

@@ -90,8 +90,7 @@ export class RokService implements OnModuleDestroy {
       await this.rokRepository.recalculatePoints();
       this.rokGateway.updateStage(this.currentStage);
 
-      const matrix = await this.rokRepository.getMatrix();
-      this.rokGateway.updateMatrix(matrix);
+      this.rokGateway.updateMatrix();
 
       await this.startTimer(40, (rem) => this.rokGateway.updateTimer(rem));
 
@@ -219,6 +218,10 @@ export class RokService implements OnModuleDestroy {
 
   async deleteQuestion(id: string) {
     return await this.rokRepository.deleteQuestion(id);
+  }
+
+  async getMatrix() {
+    return await this.rokRepository.getMatrix();
   }
 
   onModuleDestroy() {

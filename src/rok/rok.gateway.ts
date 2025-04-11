@@ -7,7 +7,6 @@ import { SendRokQuestionDto } from '../dtos/rok.dto';
 import { JwtService } from '@nestjs/jwt';
 import { UserRepository } from '../user/user.repository';
 import { RokAttack } from '../schemas/rok/rokAttack.schema';
-import { RokMatrixState } from '../schemas/rok/rokMatrixState.schema';
 
 @WebSocketGateway({ cors: true })
 export class RokGateway implements OnGatewayConnection {
@@ -71,8 +70,8 @@ export class RokGateway implements OnGatewayConnection {
     this.server.to(Room.ROK).emit('updateRound', round);
   }
 
-  updateMatrix(matrix: RokMatrixState[]) {
-    this.server.to(Room.ROK).emit('updateMatrix', matrix);
+  updateMatrix() {
+    this.server.to(Room.ROK).emit('updateMatrix');
   }
 
   updateAttacks(attacks: RokAttack[]) {
