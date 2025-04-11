@@ -31,4 +31,8 @@ export class MchgQuestionRepository {
   async getAll() {
     return await this.mchgQuestionModel.find({}).exec();
   }
+
+  async reset() {
+    await this.mchgQuestionModel.updateMany({}, { solved: false, selected: false }).exec();
+  }
 }

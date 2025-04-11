@@ -16,6 +16,7 @@ import {
   CreateRoundReqDto,
   CreateRoundResDto,
   GetAllRoundsResDto,
+  GetCurrentRoundCurrentQuestionResDto,
   GetCurrentRoundResDto,
   SubmitAnswerReqDto,
 } from '../dtos/mchg.dto';
@@ -146,13 +147,27 @@ export class MchgController {
     await this.mchgService.submitAnswer(answer, user);
   }
 
-  @Get('round/current/answer')
+  @Get('round/current/currentQuestion')
+  @ApiOperation({ summary: "Get the current round's current question" })
+  @ApiOkResponse({ type: [GetCurrentRoundCurrentQuestionResDto] })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  @UseInterceptors()
+  @SerializeOptions({
+    type: GetCurrentRoundCurrentQuestionResDto,
+    excludeExtraneousValues: true,
+  })
+  async getCurrentRoundCurrentQuestion() {
+    return await this.mchgService.getCurrentRoundCurrentQuestion();
+  }
+
+  @Get('round/current/currentAnswer')
   @ApiOperation({ summary: "Get the current question's answer (should be called in 5s after receiving the signal)" })
   @ApiOkResponse({ type: String })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard())
-  getCurrentQuestionAnswer() {
-    return this.mchgService.getCurrentQuestionAnswer();
+  async getCurrentQuestionAnswer(@Req() { user }: AuthRequest) {
+    return await this.mchgService.getCurrentQuestionAnswer(user.username);
   }
 
   @Post('mainQuestion/request')

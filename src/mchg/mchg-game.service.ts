@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { MchgTimerService } from './mchg-timer.service';
 import { MchgGateway } from './mchg.gateway';
 import { MchgGameState, MchgStage } from '../common/enum/mchg/mchgStage.enum';
@@ -8,6 +8,7 @@ import { MchgSubmissionRepository } from './mchg-submission.repository';
 import { User } from '../schemas/user.schema';
 import { MchgAnswerQueueService } from './mchg-answer-queue.service';
 import { UserRepository } from '../user/user.repository';
+import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
 
 const MAIN_ANSWER_POINTS = 150;
 const SUB_ANSWER_POINTS = 15;
@@ -33,10 +34,16 @@ export class MchgGameService {
   private roundStage: MchgStage = MchgStage.CHOOSING_QUESTION;
   private gameState = MchgGameState.NOT_RUNNING;
 
-  runGame() {
+  async reset() {
     this.roundIndex = 0;
     this.roundStage = MchgStage.CHOOSING_QUESTION;
-    this.gameState = MchgGameState.RUNNING;
+    this.gameState = MchgGameState.NOT_RUNNING;
+    await this.questionRepository.reset();
+    await this.answerQueueService.clear();
+  }
+
+  async runGame() {
+    await this.reset();
 
     void (async () => {
       await this.timerService.start(3, (rem) => this.gateway.updateRunGameTimer(rem));
@@ -45,6 +52,7 @@ export class MchgGameService {
   }
 
   pauseGame() {
+    this.timerService.pause();
     this.gameState = MchgGameState.PAUSED;
     this.gateway.pauseGame();
   }
@@ -54,12 +62,14 @@ export class MchgGameService {
     this.gateway.resumeGame();
 
     void this.runRound();
+    this.timerService.resume();
   }
 
   private async runRound() {
     if (this.roundIndex >= ROUND_COUNT) {
       this.gameState = MchgGameState.NOT_RUNNING;
       this.gateway.endGame();
+      return;
     }
 
     switch (this.roundStage) {
@@ -81,6 +91,7 @@ export class MchgGameService {
 
       case MchgStage.SHOWING_ROUND_RESULT:
         await this.showingRoundResultPhase();
+        break;
     }
   }
 
@@ -203,6 +214,10 @@ export class MchgGameService {
   }
 
   async selectQuestion(index: number) {
+    if (this.roundStage === MchgStage.ANSWERING_SUB_QUESTION || this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) {
+      throw new BadRequestException('Question is already running');
+    }
+
     const currentRound = await this.getCurrentRound();
     const question = currentRound.questions[index];
 
@@ -219,11 +234,15 @@ export class MchgGameService {
     void this.runRound();
   }
 
+  private isCorrect(submission: MchgSubmission) {
+    return submission.answer.trim().toLowerCase() === submission.question.answer.trim().toLowerCase();
+  }
+
   private async updateScores() {
     const submissions = await this.submissionRepository.getAll();
 
     for (const submission of submissions) {
-      if (submission.answer.trim().toLowerCase() === submission.question.answer.trim().toLowerCase()) {
+      if (this.isCorrect(submission)) {
         this.userRepository.increaseScore(submission.user._id!, SUB_ANSWER_POINTS);
       }
     }
@@ -231,13 +250,15 @@ export class MchgGameService {
     await this.submissionRepository.deleteAll();
   }
 
-  async getCurrentQuestionAnswer() {
-    const question = await this.getCurrentQuestion();
-
-    if (!question) {
-      throw new BadRequestException('No current question');
+  async getCurrentQuestionAnswer(teamUsername: string) {
+    const submission = await this.submissionRepository.findByUsername(teamUsername);
+    if (!submission) {
+      throw new NotFoundException(`Unable to find submission with username ${teamUsername}`);
     }
 
-    return question.answer;
+    return {
+      ...submission,
+      isCorrect: this.isCorrect(submission),
+    };
   }
 }

@@ -1,6 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { MchgRoundRepository } from './mchg-round.repository';
-import { CreateRoundReqDto } from '../dtos/mchg.dto';
+import { CreateRoundReqDto, GetCurrentRoundCurrentQuestionResDto } from '../dtos/mchg.dto';
 import { User } from '../schemas/user.schema';
 import { MchgQuestionRepository } from './mchg-question.repository';
 import { MchgGameService } from './mchg-game.service';
@@ -55,6 +55,20 @@ export class MchgService {
     return this.questionRepository.getAll();
   }
 
+  async getCurrentRoundCurrentQuestion(): Promise<GetCurrentRoundCurrentQuestionResDto> {
+    const currentRound = await this.getCurrentRound();
+    const currentQuestion = await this.questionRepository.findById(currentRound.currentQuestion!);
+    if (!currentQuestion) {
+      throw new BadRequestException('No currently running question');
+    }
+
+    return {
+      ...currentQuestion,
+      answer: '',
+      answerLength: currentQuestion.answer.length,
+    };
+  }
+
   async selectQuestion(index: number) {
     await this.gameService.selectQuestion(index);
   }
@@ -71,7 +85,7 @@ export class MchgService {
     await this.gameService.acceptCurrentUserMainQuestionAnswer();
   }
 
-  getCurrentQuestionAnswer() {
-    return this.gameService.getCurrentQuestionAnswer();
+  getCurrentQuestionAnswer(teamUsername: string) {
+    return this.gameService.getCurrentQuestionAnswer(teamUsername);
   }
 }
