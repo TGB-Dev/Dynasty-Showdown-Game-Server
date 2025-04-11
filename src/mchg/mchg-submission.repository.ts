@@ -30,6 +30,6 @@ export class MchgSubmissionRepository {
       throw new NotFoundException(`User with username ${username} does not exist`);
     }
 
-    return await this.mchgSubmissionModel.findOne({ user: user }).populate('question').exec();
+    return (await this.mchgSubmissionModel.findOne({ user: user._id }).populate('question').exec())?.toObject();
   }
 }

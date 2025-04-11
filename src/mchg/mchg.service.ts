@@ -85,6 +85,11 @@ export class MchgService {
     await this.gameService.acceptCurrentUserMainQuestionAnswer();
   }
 
+  async getCurrentRequestUser() {
+    const queueItem = await this.gameService.getCurrentRequestUser();
+    return { username: queueItem.user.username };
+  }
+
   getCurrentQuestionAnswer(teamUsername: string) {
     return this.gameService.getCurrentQuestionAnswer(teamUsername);
   }

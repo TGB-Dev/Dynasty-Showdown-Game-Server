@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { MchgMainQuestionQueueRepository } from './mchg-main-question-queue.repository';
 import { User } from '../schemas/user.schema';
 
@@ -17,7 +17,9 @@ export class MchgAnswerQueueService {
 
   async top() {
     const queue = await this.mainQuestionQueueRepository.getAll();
-    return queue[0];
+
+    if (queue.length === 0) throw new BadRequestException('Empty queue');
+    return queue[0].toObject();
   }
 
   clear() {

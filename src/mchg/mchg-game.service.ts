@@ -222,6 +222,10 @@ export class MchgGameService {
     void this.runRound();
   }
 
+  getCurrentRequestUser() {
+    return this.answerQueueService.top();
+  }
+
   async selectQuestion(index: number) {
     if (this.roundStage === MchgStage.ANSWERING_SUB_QUESTION || this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) {
       throw new BadRequestException('Question is already running');

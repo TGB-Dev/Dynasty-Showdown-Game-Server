@@ -34,11 +34,13 @@ export class GetCurrentRoundResDto extends PickType(MchgRound, [
   questions: QuestionDto[];
 }
 
-export class BroadcastQuestionDto extends PickType(MchgQuestion, ['question'] as const) {}
-
 export class SubmitAnswerReqDto extends PickType(MchgSubmission, ['answer'] as const) {}
 
 export class GetCurrentRoundCurrentQuestionResDto extends QuestionDto {
-  @Expose({ groups: [UserRole.ADMIN, UserRole.PLAYER, UserRole.PUBLIC_VIEW] })
+  @Expose()
   answerLength: number;
+}
+
+export class GetCurrentRequestUserResDto {
+  username: string;
 }
