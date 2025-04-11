@@ -10,6 +10,8 @@ import { CdvqModule } from './cdvq/cdvq.module';
 import { MchgModule } from './mchg/mchg.module';
 import { TgoModule } from './tgo/tgo.module';
 
+// import { RokModule } from './rok/rok.module';
+
 @Module({
   imports: [
     MongooseModule.forRoot(globalConfigs.mongodbUri),
@@ -19,6 +21,7 @@ import { TgoModule } from './tgo/tgo.module';
     CdvqModule,
     MchgModule,
     TgoModule,
+    // RokModule,
   ],
   controllers: [AppController],
   providers: [AppService],

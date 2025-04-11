@@ -2,7 +2,7 @@ import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Room } from '../common/enum/room.enum';
 
-@WebSocketGateway()
+@WebSocketGateway({ cors: true })
 export class CdvqGateway {
   @WebSocketServer() private readonly server: Server;
 
@@ -17,5 +17,37 @@ export class CdvqGateway {
 
   sendMessage(message: string) {
     this.server.to(Room.CDVQ).emit('message', message);
+  }
+
+  emitTimerUpdate(remainingTime: number) {
+    this.server.emit('timerUpdate', remainingTime);
+  }
+
+  emitGameEnded() {
+    this.server.emit('gameEnded');
+  }
+
+  emitGamePaused() {
+    this.server.emit('gamePaused');
+  }
+
+  emitGameResumed() {
+    this.server.emit('gameResumed');
+  }
+
+  emitQuestion() {
+    this.server.emit('question');
+  }
+
+  emitAnswer() {
+    this.server.emit('answer');
+  }
+
+  emitResult() {
+    this.server.emit('result');
+  }
+
+  emitReadyTimer(remainingTime: number) {
+    this.server.emit('readyTimer', remainingTime);
   }
 }
