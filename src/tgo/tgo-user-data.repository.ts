@@ -33,4 +33,8 @@ export class TgoUserDataRepository {
       .findOneAndUpdate({ username }, { $set: { currentQuestions: { questions, answers } } })
       .exec();
   }
+
+  setCurrentRound(username: string, round: number) {
+    return this.tgoUserDataModel.findOneAndUpdate({ username }, { $set: { round } }).exec();
+  }
 }

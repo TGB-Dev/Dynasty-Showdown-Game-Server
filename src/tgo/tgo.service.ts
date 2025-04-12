@@ -52,6 +52,7 @@ export class TgoService {
       tgoUserData = (
         await this.tgoUserDataRepository.create({
           username,
+          currentRound: this.tgoGameService.getCurrentRound(),
         })
       ).toObject();
     }
@@ -87,6 +88,9 @@ export class TgoService {
       })),
       sortedAnswers,
     );
+
+    // Set current round
+    await this.tgoUserDataRepository.setCurrentRound(username, this.tgoGameService.getCurrentRound());
 
     return {
       questions: randomQuestions.map((question) => ({

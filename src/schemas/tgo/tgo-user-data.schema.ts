@@ -34,6 +34,9 @@ export class TgoUserData extends BaseModel {
 
   @Prop({ default: 0 })
   attackScore: number;
+
+  @Prop({ required: true })
+  currentRound: number;
 }
 
 export const TgoUserDataSchema = SchemaFactory.createForClass(TgoUserData);

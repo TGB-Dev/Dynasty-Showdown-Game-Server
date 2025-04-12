@@ -5,6 +5,8 @@ import { TgoGameState } from '../common/enum/tgo/tgo-game-state.enum';
 import { TgoGateway } from './tgo.gateway';
 import { TgoUserDataRepository } from './tgo-user-data.repository';
 import { TgoStage } from '../common/enum/tgo/tgo-stage.enum';
+import { UserRepository } from '../user/user.repository';
+import { TgoQuestionPackPunishedScore } from '../common/enum/tgo/tgo-question-pack-punished-score.enum';
 
 const READY_DURATION = 3;
 const CHOOSING_AND_ANSWERING_DURATION = 70;
@@ -14,12 +16,13 @@ const ATTACKING_AND_SHOWING_RESULT_DURATION = 30;
 export class TgoGameService {
   private gameState = TgoGameState.NOT_PLAYING;
   private roundState = TgoRoundState.WAITING;
-  private countdown: number;
+  private currentRound: number;
 
   constructor(
     private readonly timerService: TgoTimerService,
     private readonly gateway: TgoGateway,
     private readonly TgoUserDataRepository: TgoUserDataRepository,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async startGame() {
@@ -28,7 +31,7 @@ export class TgoGameService {
     }
 
     await this.TgoUserDataRepository.deleteAll();
-    this.countdown = 10;
+    this.currentRound = 10;
 
     this.gameState = TgoGameState.PLAYING;
     void (async () => {
@@ -75,15 +78,17 @@ export class TgoGameService {
           break;
       }
 
-      this.countdown--;
+      await this.processScore();
+
+      this.currentRound--;
       await this.startRound();
     })();
   }
 
   async startRound() {
-    console.log('Starting round', this.countdown);
+    console.log('Starting round', this.currentRound);
 
-    if (this.countdown === 0) {
+    if (this.currentRound === 0) {
       this.gateway.emitGameEnded();
       this.endGame();
       return;
@@ -94,8 +99,9 @@ export class TgoGameService {
 
     await this.choosingAndAnsweringPhase();
     await this.attackingAndShowingResultPhase();
+    await this.processScore();
 
-    this.countdown--;
+    this.currentRound--;
     await this.startRound();
   }
 
@@ -117,6 +123,33 @@ export class TgoGameService {
     );
   }
 
+  async processScore() {
+    const usersData = await this.TgoUserDataRepository.findAll();
+    const allUsers = await this.userRepository.findAll();
+
+    await Promise.all(
+      usersData.map(async (userData) => {
+        if (userData.currentRound === this.currentRound) return;
+
+        const user = (await this.userRepository.findUserByUsername(userData.username))!;
+
+        user.score += TgoQuestionPackPunishedScore.PACK_3;
+        await user.save();
+      }),
+    );
+
+    const listUsernamePlayed = usersData.map((user) => user.username);
+
+    await Promise.all(
+      allUsers.map(async (user) => {
+        if (listUsernamePlayed.includes(user.username)) return;
+
+        user.score += TgoQuestionPackPunishedScore.PACK_3;
+        await user.save();
+      }),
+    );
+  }
+
   endGame() {
     this.gameState = TgoGameState.NOT_PLAYING;
     this.roundState = TgoRoundState.WAITING;
@@ -125,5 +158,9 @@ export class TgoGameService {
 
   getRoundState() {
     return this.roundState;
+  }
+
+  getCurrentRound() {
+    return this.currentRound;
   }
 }

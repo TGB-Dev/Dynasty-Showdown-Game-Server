@@ -25,6 +25,10 @@ export class UserRepository {
     return await newUser.save();
   }
 
+  async findAll() {
+    return await this.userModel.find({}).exec();
+  }
+
   increaseScore(user_id: User | mongoose.Types.ObjectId | string, score: number) {
     return this.userModel.findByIdAndUpdate(user_id, { $inc: { score } }, { new: true });
   }
