@@ -154,6 +154,7 @@ export class CdvqGameService {
   }
 
   private async startRound() {
+    await this.submissionRepository.deleteAll();
     this.currentQuestion = (await this.questionRepository.getFirstWaiting())?.toObject() ?? null;
 
     if (this.currentQuestion === null) {
