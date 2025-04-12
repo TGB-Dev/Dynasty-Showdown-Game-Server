@@ -49,4 +49,34 @@ export class AdminController {
       throw new BadRequestException(`Invalid room name: ${roomName}`, 'invalid_room_name');
     }
   }
+
+  @UseGuards(AuthGuard(UserRole.ADMIN))
+  @Post('endGame/:roomName')
+  async endGame(@Param('roomName') roomName: string) {
+    const runningGame = await this.gameRepository.getRunningGame();
+
+    if (runningGame !== null) {
+      throw new BadRequestException('A game is already running', 'game_already_running');
+    }
+
+    if (roomName === Room.CDVQ.toString()) {
+      console.log('Starting game in CDVQ room');
+      this.cdvqGateway.leaveRoom();
+      await this.gameRepository.unsetRunningGame(Room.CDVQ);
+    } else if (roomName === Room.MCHG.toString()) {
+      console.log('Starting game in MCHG room');
+      this.mchgGateway.leaveRoom();
+      await this.gameRepository.unsetRunningGame(Room.MCHG);
+    } else if (roomName === Room.TGO.toString()) {
+      console.log('Starting game in TGO room');
+      this.tgoGateway.leaveRoom();
+      await this.gameRepository.unsetRunningGame(Room.TGO);
+    } else if (roomName === Room.ROK.toString()) {
+      console.log('Starting game in ROK room');
+      this.rokGateway.leaveRoom();
+      await this.gameRepository.unsetRunningGame(Room.ROK);
+    } else {
+      throw new BadRequestException(`Invalid room name: ${roomName}`, 'invalid_room_name');
+    }
+  }
 }

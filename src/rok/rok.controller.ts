@@ -86,24 +86,12 @@ export class RokController {
     return await this.rokService.getCurrentQuestion();
   }
 
-  @ApiOperation({ summary: 'Choose the next question.' })
-  @ApiOkResponse({ description: 'OK.', type: SendRokQuestionDto })
-  @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Get('questions/next')
-  async nextQuestion() {
-    return await this.rokService.nextQuestion();
-  }
-
   @ApiOperation({ summary: 'Answer the question with `questionId`.' })
   @ApiResponse({ status: 201, description: 'OK (POST).' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Post('questions/answer/:questionId')
-  async answerQuestion(
-    @Param('questionId') questionId: string,
-    @Request() req: AuthRequest,
-    @Body() dto: RokAnswerQuestionDto,
-  ) {
-    await this.rokService.answerQuestion(questionId, req.user.username, dto);
+  @Post('questions/answer')
+  async answerQuestion(@Request() req: AuthRequest, @Body() dto: RokAnswerQuestionDto) {
+    await this.rokService.answerQuestion(req.user.username, dto);
   }
 
   @ApiOperation({ summary: 'Create a new question.' })
@@ -115,14 +103,14 @@ export class RokController {
   }
 
   @ApiOperation({ summary: 'Get all available questions.' })
-  @UseGuards(AuthGuard())
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('questions')
   async getQuestions() {
     return await this.rokService.getQuestions();
   }
 
   @ApiOperation({ summary: 'Get question by `id`.' })
-  @UseGuards(AuthGuard())
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   @Get('questions/:id')
   async getQuestionById(@Param('id') id: string) {
     return await this.rokService.getQuestionById(id);
@@ -141,6 +129,18 @@ export class RokController {
   @Delete('questions/:id')
   async deleteQuestion(@Param('id') id: string) {
     return await this.rokService.deleteQuestion(id);
+  }
+
+  @Get('users/is-attacking')
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  async isAttacking(@Request() req: AuthRequest) {
+    return await this.rokService.checkInAttackingTeams(req.user.username);
+  }
+
+  @Get('users/is-defending')
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  async isDefending(@Request() req: AuthRequest) {
+    return await this.rokService.checkInDefendingTeams(req.user.username);
   }
 
   @ApiOperation({ summary: 'Get the matrix' })

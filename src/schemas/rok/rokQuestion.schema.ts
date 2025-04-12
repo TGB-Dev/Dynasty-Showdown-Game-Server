@@ -39,7 +39,7 @@ export class RokQuestion extends BaseModel {
   correctChoiceIndex?: number;
 
   @ApiProperty({ description: 'Whether the question is already chosen or not.' })
-  @Prop()
+  @Prop({ default: false })
   selected: boolean;
 
   @ApiProperty({ description: 'The round in which this question is selected.' })

@@ -9,38 +9,15 @@ import { UserRepository } from '../user/user.repository';
 
 @Injectable()
 export class RokRepository {
+  private currentQuestionId: mongoose.Types.ObjectId | null = null;
+  private readonly bfsDirections = [-1, +1, -9, +9];
+
   constructor(
     @InjectModel(RokAttack.name) private readonly rokAttackModel: Model<RokAttack>,
     @InjectModel(RokMatrixState.name) private readonly rokMatrixModel: Model<RokMatrixState>,
     @InjectModel(RokQuestion.name) private readonly rokQuestionModel: Model<RokQuestion>,
     private readonly userRepository: UserRepository,
   ) {}
-
-  private currentQuestionId: mongoose.Types.ObjectId | null = null;
-
-  private readonly bfsDirections = [-1, +1, -9, +9];
-
-  private async bfs(cityId: number, teamUsername: string) {
-    const matrix = await this.getMatrix();
-
-    const q = [{ cityId: cityId, cnt: 1 }];
-    while (q.length > 0) {
-      const curr = q.shift()!;
-
-      if (curr.cnt === 4) {
-        return true;
-      }
-
-      for (const direction of this.bfsDirections) {
-        const newCityId = curr.cityId + direction;
-        if (0 <= newCityId && newCityId < 81 && matrix.find((c) => c.cityId === newCityId)!.owner === teamUsername) {
-          q.push({ cityId: newCityId, cnt: curr.cnt + 1 });
-        }
-      }
-    }
-
-    return false;
-  }
 
   async createQuestion(newQuestion: NewRokQuestionDto) {
     const newQuestionModel = new this.rokQuestionModel(newQuestion);
@@ -54,6 +31,14 @@ export class RokRepository {
 
   async getQuestionById(id: string) {
     return await this.rokQuestionModel.findById(id).exec();
+  }
+
+  async getOwnershipByCityId(cityId: number) {
+    const city = await this.rokMatrixModel.findOne({ cityId }).exec();
+    if (!city) {
+      throw new NotFoundException('City not found');
+    }
+    return city.owner;
   }
 
   async updateQuestion(id: string, updates: UpdateRokQuestionDto) {
@@ -71,8 +56,8 @@ export class RokRepository {
     await this.rokQuestionModel.findByIdAndDelete(id, { new: true }).exec();
   }
 
-  async nextQuestion() {
-    const question = await this.getRandomQuestion();
+  async nextQuestion(currentRound: number) {
+    const question = await this.getRandomQuestion(currentRound);
     this.currentQuestionId = question._id;
     return question;
   }
@@ -82,32 +67,6 @@ export class RokRepository {
       throw new BadRequestException('No currently running question');
     }
     return await this.rokQuestionModel.findById(this.currentQuestionId).exec();
-  }
-
-  private async getRandomQuestion() {
-    const fetchedQuestion = await this.rokQuestionModel
-      .aggregate([
-        {
-          $match: { selected: false },
-          $sample: { size: 1 },
-        },
-      ])
-      .exec();
-
-    if (!fetchedQuestion) {
-      throw new NotFoundException('No more questions found.');
-    }
-
-    return (await this.rokQuestionModel
-      .findOneAndUpdate(
-        {
-          // @ts-expect-error The aggregation pipeline doesn't recognize the document's type
-          _id: fetchedQuestion._id,
-        },
-        { selected: true },
-        { new: true },
-      )
-      .exec())!;
   }
 
   async getCurrentQuestionForTeam(round: number) {
@@ -204,5 +163,49 @@ export class RokRepository {
 
   async getMatrix() {
     return await this.rokMatrixModel.find({}).exec();
+  }
+
+  private async bfs(cityId: number, teamUsername: string) {
+    const matrix = await this.getMatrix();
+
+    const q = [{ cityId: cityId, cnt: 1 }];
+    while (q.length > 0) {
+      const curr = q.shift()!;
+
+      if (curr.cnt === 4) {
+        return true;
+      }
+
+      for (const direction of this.bfsDirections) {
+        const newCityId = curr.cityId + direction;
+        if (0 <= newCityId && newCityId < 81 && matrix.find((c) => c.cityId === newCityId)!.owner === teamUsername) {
+          q.push({ cityId: newCityId, cnt: curr.cnt + 1 });
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private async getRandomQuestion(currentRound: number) {
+    const questions = await this.rokQuestionModel
+      .find({
+        selected: false,
+      })
+      .exec();
+
+    const randomIndex = Math.floor(Math.random() * questions.length);
+    const randomQuestion = questions[randomIndex];
+
+    if (!randomQuestion) {
+      throw new NotFoundException('No questions available');
+    }
+
+    randomQuestion.selected = true;
+    randomQuestion.round = currentRound;
+
+    await randomQuestion.save();
+
+    return randomQuestion;
   }
 }

@@ -85,9 +85,10 @@ export class RokService implements OnModuleDestroy {
     }
 
     if (this.currentStage === RokStage.ATTACK) {
+      await this.rokRepository.nextQuestion(this.currentRound);
       this.rokGateway.updateStage(this.currentStage);
-      const attackingTeams = await this.rokRepository.getAttackingTeams();
-      this.sendGetQuestionSignal(attackingTeams);
+
+      // this.sendGetQuestionSignal(attackingTeams);
       await this.timerService.start(ATTACK_TIMEOUT, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
@@ -96,9 +97,10 @@ export class RokService implements OnModuleDestroy {
     }
 
     if (this.currentStage === RokStage.DEFEND) {
+      await this.rokRepository.nextQuestion(this.currentRound);
       this.rokGateway.updateStage(this.currentStage);
-      const teams = await this.userRepository.getTeamUsernames();
-      this.sendGetQuestionSignal(teams);
+
+      // this.sendGetQuestionSignal(teams);
       await this.timerService.start(DEFEND_TIMEOUT, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
@@ -122,6 +124,27 @@ export class RokService implements OnModuleDestroy {
     }
   }
 
+  async checkInAttackingTeams(username: string) {
+    const teams = await this.rokRepository.getAttackingTeams();
+    if (!teams.includes(username)) {
+      throw new BadRequestException('You are not in the attacking teams.');
+    }
+    return true;
+  }
+
+  async checkInDefendingTeams(username: string) {
+    const teams = await this.rokRepository.getAttacks();
+    const defendingTeams = await Promise.all(
+      teams.map(async (team) => {
+        return await this.rokRepository.getOwnershipByCityId(team.cityId);
+      }),
+    );
+    if (!defendingTeams.includes(username)) {
+      throw new BadRequestException('You are not in the defending teams.');
+    }
+    return true;
+  }
+
   async endGame() {
     this.rokGateway.endGame();
     this.rokGateway.leaveRoom();
@@ -130,8 +153,8 @@ export class RokService implements OnModuleDestroy {
     await this.gameRepository.unsetStartedGame(Room.ROK);
   }
 
-  async answerQuestion(questionId: string, teamUsername: string, dto: RokAnswerQuestionDto) {
-    const question = await this.rokRepository.getQuestionById(questionId);
+  async answerQuestion(username: string, rokAnswerQuestionDto: RokAnswerQuestionDto) {
+    const question = await this.rokRepository.getCurrentQuestion();
     if (!question) {
       throw new NotFoundException('Question not found');
     }
@@ -145,31 +168,31 @@ export class RokService implements OnModuleDestroy {
 
     if (this.currentStage === RokStage.ATTACK) {
       if (question.isMultiple) {
-        if (question.correctChoiceIndex !== dto.choiceIndex) {
-          await this.rokRepository.deleteAttacksOnIncorrectAnswer(teamUsername);
+        if (question.correctChoiceIndex !== rokAnswerQuestionDto.choiceIndex) {
+          await this.rokRepository.deleteAttacksOnIncorrectAnswer(username);
           return false;
         } else {
-          await this.rokRepository.markAttackAsSucceeded(teamUsername);
+          await this.rokRepository.markAttackAsSucceeded(username);
           return true;
         }
       } else {
-        if (question.answer !== dto.answer) {
-          await this.rokRepository.deleteAttacksOnIncorrectAnswer(teamUsername);
+        if (question.answer !== rokAnswerQuestionDto.answer) {
+          await this.rokRepository.deleteAttacksOnIncorrectAnswer(username);
           return false;
         } else {
-          await this.rokRepository.markAttackAsSucceeded(teamUsername);
+          await this.rokRepository.markAttackAsSucceeded(username);
           return true;
         }
       }
     } else if (this.currentStage === RokStage.DEFEND) {
       if (question.isMultiple) {
-        if (question.correctChoiceIndex === dto.choiceIndex) {
-          await this.rokRepository.defendOnCorrectAnswer(teamUsername);
+        if (question.correctChoiceIndex === rokAnswerQuestionDto.choiceIndex) {
+          await this.rokRepository.defendOnCorrectAnswer(username);
           return true;
         }
       } else {
-        if (question.answer === dto.answer) {
-          await this.rokRepository.defendOnCorrectAnswer(teamUsername);
+        if (question.answer === rokAnswerQuestionDto.answer) {
+          await this.rokRepository.defendOnCorrectAnswer(username);
           return true;
         }
       }
@@ -178,18 +201,8 @@ export class RokService implements OnModuleDestroy {
     return false;
   }
 
-  async nextQuestion() {
-    return await this.rokRepository.nextQuestion();
-  }
-
   async getCurrentQuestion() {
     return await this.rokRepository.getCurrentQuestion();
-  }
-
-  sendGetQuestionSignal(teams: string[]) {
-    for (const team of teams) {
-      this.rokGateway.sendQuestion(team);
-    }
   }
 
   async selectCity(teamUsername: string, cityId: number) {
