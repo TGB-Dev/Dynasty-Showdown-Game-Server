@@ -2,17 +2,12 @@ import { WebSocketGateway, WebSocketServer } from '@nestjs/websockets';
 import { Server } from 'socket.io';
 import { Room } from '../common/enum/room.enum';
 import { RokStage } from '../common/enum/rok/rokStage.enum';
-import { JwtService } from '@nestjs/jwt';
-import { UserRepository } from '../user/user.repository';
 
 @WebSocketGateway({ cors: true })
 export class RokGateway {
   @WebSocketServer() server: Server;
 
-  constructor(
-    private readonly jwtService: JwtService,
-    private readonly userRepository: UserRepository,
-  ) {}
+  constructor() {}
 
   joinRoom() {
     this.server.socketsJoin(Room.ROK);
