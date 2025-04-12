@@ -59,18 +59,22 @@ async function seedGames(app: INestApplicationContext) {
     {
       game: Room.CDVQ,
       running: false,
+      started: false,
     },
     {
       game: Room.MCHG,
       running: false,
+      started: false,
     },
     {
       game: Room.TGO,
       running: false,
+      started: false,
     },
     {
       game: Room.ROK,
       running: false,
+      started: false,
     },
   ];
 
