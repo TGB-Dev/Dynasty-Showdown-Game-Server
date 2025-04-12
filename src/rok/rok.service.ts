@@ -48,6 +48,18 @@ export class RokService implements OnModuleDestroy {
     void this.runRound();
   }
 
+  increaseRoundCount() {
+    this.roundCount++;
+  }
+
+  decreaseRoundCount() {
+    this.roundCount--;
+  }
+
+  getRoundCount() {
+    return this.roundCount;
+  }
+
   async runRound() {
     if (this.currentRound >= this.roundCount) {
       this.rokGateway.endGame();

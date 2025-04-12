@@ -39,6 +39,24 @@ export class RokController {
     return this.rokService.pauseGame();
   }
 
+  @ApiOperation({ summary: 'Increase the number of rounds.' })
+  @Get('round/increase')
+  increaseRoundCount() {
+    this.rokService.increaseRoundCount();
+  }
+
+  @ApiOperation({ summary: 'Decrease the number of rounds.' })
+  @Get('round/decrease')
+  decreaseRoundCount() {
+    this.rokService.decreaseRoundCount();
+  }
+
+  @ApiOperation({ summary: 'Get the number of rounds.' })
+  @Get('round/count')
+  getRoundCount() {
+    return this.rokService.getRoundCount();
+  }
+
   @ApiOperation({ summary: 'Select `cityId` for attack.' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @Get('city/select/:cityId')
