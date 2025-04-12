@@ -90,11 +90,11 @@ export class MchgGameService {
   }
 
   async isAbleToAnswerMainQuestion(user: User) {
-    return (await this.answerQueueService.findByUser(user)) === null;
+    return (await this.answerQueueService.findByUser(user)) === null && this.roundIndex < ROUND_COUNT;
   }
 
   async requestAnswerMainQuestion(user: User) {
-    if (this.roundStage === MchgStage.UPDATE_RESULTS) {
+    if (this.roundStage === MchgStage.UPDATE_RESULTS && this.roundIndex >= ROUND_COUNT) {
       throw new BadRequestException('Cannot request main question answer at this time');
     }
 
