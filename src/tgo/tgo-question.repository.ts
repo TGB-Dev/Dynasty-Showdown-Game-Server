@@ -28,4 +28,8 @@ export class TgoQuestionRepository {
   findById(id: string) {
     return this.tgoQuestionModel.findById(id).exec();
   }
+
+  findByAnswer(answer: number) {
+    return this.tgoQuestionModel.findOne({ answer: answer }).exec();
+  }
 }

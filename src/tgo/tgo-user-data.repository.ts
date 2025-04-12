@@ -28,10 +28,8 @@ export class TgoUserDataRepository {
     return this.tgoUserDataModel.findOneAndUpdate({ username }, { $push: { chosenQuestions: questionId } }).exec();
   }
 
-  setCurrentQuestions(username: string, questions: { id: string; questionText: string }[], answers: number[]) {
-    return this.tgoUserDataModel
-      .findOneAndUpdate({ username }, { $set: { currentQuestions: { questions, answers } } })
-      .exec();
+  setCurrentQuestions(username: string, questions: CurrentQuestion[]) {
+    return this.tgoUserDataModel.findOneAndUpdate({ username }, { $set: { currentQuestions: questions } });
   }
 
   setCurrentRound(username: string, round: number) {

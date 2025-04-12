@@ -10,27 +10,10 @@ export class TgoUserData extends BaseModel {
   chosenQuestions: string[]; // Array of question IDs
 
   @Prop({
-    default: {
-      questions: [],
-      answers: [],
-    },
-    type: {
-      questions: [
-        {
-          id: String,
-          questionText: String,
-        },
-      ],
-      answers: [Number],
-    },
+    default: [],
+    type: [{ questionId: String, questionText: String }],
   })
-  currentQuestions: {
-    questions: {
-      id: string;
-      questionText: string;
-    }[]; // Array of question IDs;
-    answers: number[]; // Array of sorted answers and it is not corresponding to the question ID
-  };
+  currentQuestions: CurrentQuestion[]; // Array of question IDs
 
   @Prop({ default: 0 })
   attackScore: number;
