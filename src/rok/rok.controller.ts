@@ -39,18 +39,18 @@ export class RokController {
     return this.rokService.pauseGame();
   }
 
-  @ApiOperation({ summary: 'Create an attack on `cityId`.' })
+  @ApiOperation({ summary: 'Select `cityId` for attack.' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Get('attack/create/:cityId')
-  async createAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
-    await this.rokService.createAttack(req.user.username, cityId);
+  @Get('city/select/:cityId')
+  async selectCity(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
+    await this.rokService.selectCity(req.user.username, cityId);
   }
 
-  @ApiOperation({ summary: 'Delete an attack on `cityId`.' })
+  @ApiOperation({ summary: 'Deselect `cityId` for attack.' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Get('attack/remove/:cityId')
-  async deleteAttack(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
-    await this.rokService.deleteAttack(req.user.username, cityId);
+  @Get('city/deselect/:cityId')
+  async deselectCity(@Param('cityId') cityId: number, @Request() req: AuthRequest) {
+    await this.rokService.deselectCity(req.user.username, cityId);
   }
 
   @ApiOperation({ summary: 'Get attacks of the current round.' })

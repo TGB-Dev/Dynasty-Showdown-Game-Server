@@ -108,7 +108,7 @@ export class RokRepository {
     return [...new Set(teams)];
   }
 
-  async createAttack(teamUsername: string, cityId: number) {
+  async selectCity(teamUsername: string, cityId: number) {
     const newAttack = new this.rokAttackModel({
       attackTeam: teamUsername,
       cityId: cityId,
@@ -117,7 +117,7 @@ export class RokRepository {
     await newAttack.save();
   }
 
-  async deleteAttack(teamUsername: string, cityId: number) {
+  async deselectCity(teamUsername: string, cityId: number) {
     await this.rokAttackModel.findOneAndDelete({ cityId: cityId, attackTeam: teamUsername }).exec();
   }
 

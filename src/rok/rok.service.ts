@@ -178,21 +178,21 @@ export class RokService implements OnModuleDestroy {
     }
   }
 
-  async createAttack(teamUsername: string, cityId: number) {
+  async selectCity(teamUsername: string, cityId: number) {
     if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.ATTACK)) {
       throw new BadRequestException('Attack stage ended.');
     }
 
-    await this.rokRepository.createAttack(teamUsername, cityId);
+    await this.rokRepository.selectCity(teamUsername, cityId);
     this.rokGateway.updateAttacks();
   }
 
-  async deleteAttack(teamUsername: string, cityId: number) {
+  async deselectCity(teamUsername: string, cityId: number) {
     if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.ATTACK)) {
       throw new BadRequestException('Attack stage ended.');
     }
 
-    await this.rokRepository.deleteAttack(teamUsername, cityId);
+    await this.rokRepository.deselectCity(teamUsername, cityId);
     this.rokGateway.updateAttacks();
   }
 
