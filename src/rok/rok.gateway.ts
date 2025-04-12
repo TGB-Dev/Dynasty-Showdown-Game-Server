@@ -11,7 +11,7 @@ export class RokGateway {
 
   joinRoom() {
     this.server.socketsJoin(Room.ROK);
-    this.server.emit('joinRoom', Room.ROK);
+    this.server.emit('joinedRoom', Room.ROK);
   }
 
   leaveRoom() {

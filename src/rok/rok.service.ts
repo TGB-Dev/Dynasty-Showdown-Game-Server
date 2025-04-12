@@ -124,6 +124,7 @@ export class RokService implements OnModuleDestroy {
 
   async endGame() {
     this.rokGateway.endGame();
+    this.rokGateway.leaveRoom();
     this.timerService.stop();
     await this.gameRepository.unsetRunningGame(Room.ROK);
     await this.gameRepository.unsetStartedGame(Room.ROK);
