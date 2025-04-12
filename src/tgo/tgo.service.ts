@@ -10,6 +10,7 @@ import { TgoQuestionPackScore } from '../common/enum/tgo/tgo-question-pack-score
 import { TgoQuestionPackPunishedScore } from '../common/enum/tgo/tgo-question-pack-punished-score.enum';
 import { TgoGameService } from './tgo-game.service';
 import { TgoRoundState } from '../common/enum/tgo/tgo-round-state.enum';
+import {CurrentQuestion} from "../common/interfaces/tgo.interface";
 
 @Injectable()
 export class TgoService {
