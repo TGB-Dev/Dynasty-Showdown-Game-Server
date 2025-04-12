@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { RokAttack } from '../schemas/rok/rokAttack.schema';
-import { Model, ObjectId } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 import { RokMatrixState } from '../schemas/rok/rokMatrixState.schema';
 import { RokQuestion } from '../schemas/rok/rokQuestion.schema';
 import { NewRokQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
@@ -16,7 +16,7 @@ export class RokRepository {
     private readonly userRepository: UserRepository,
   ) {}
 
-  private currentQuestionId: ObjectId | null = null;
+  private currentQuestionId: mongoose.Types.ObjectId | null = null;
 
   private readonly bfsDirections = [-1, +1, -9, +9];
 

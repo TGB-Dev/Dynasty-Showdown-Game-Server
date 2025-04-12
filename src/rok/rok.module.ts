@@ -8,6 +8,7 @@ import { RokAttack, RokAttackSchema } from '../schemas/rok/rokAttack.schema';
 import { RokRepository } from './rok.repository';
 import { RokQuestion, RokQuestionSchema } from '../schemas/rok/rokQuestion.schema';
 import { UserModule } from '../user/user.module';
+import { RokTimerService } from './rok-timer.service';
 
 @Module({
   imports: [
@@ -24,7 +25,7 @@ import { UserModule } from '../user/user.module';
       },
     ]),
   ],
-  providers: [RokGateway, RokRepository, RokService],
+  providers: [RokGateway, RokRepository, RokService, RokTimerService],
   controllers: [RokController],
   exports: [RokRepository, RokGateway],
 })
