@@ -15,8 +15,6 @@ const MAIN_ANSWER_POINTS = 150;
 const SUB_ANSWER_POINTS = 15;
 const ROUND_COUNT = 3;
 const SHOWING_ANSWER_DELAY_DURATION = 10;
-const SHOWING_ROUND_RESULT_DURATION = 15;
-const ROUND_DELAY_DURATION = 5;
 const ANSWERING_SUB_QUESTION_DURATION = 30;
 
 @Injectable()
@@ -65,7 +63,7 @@ export class MchgGameService {
     this.gateway.resumeGame();
 
     void this.runRound();
-    this.timerService.resume();
+    void this.timerService.resume();
   }
 
   private async runRound() {
@@ -92,8 +90,8 @@ export class MchgGameService {
         await this.showingSubQuestionAnswerPhase();
         break;
 
-      case MchgStage.SHOWING_ROUND_RESULT:
-        await this.showingRoundResultPhase();
+      case MchgStage.UPDATE_RESULTS:
+        await this.updateResultsPhase();
         break;
     }
   }
@@ -105,7 +103,7 @@ export class MchgGameService {
     const availableQuestions = currentRound.questions.filter((question) => !question.selected);
 
     if (availableQuestions.length === 0) {
-      this.roundStage = MchgStage.SHOWING_ROUND_RESULT;
+      this.roundStage = MchgStage.UPDATE_RESULTS;
       await this.runRound();
     }
   }
@@ -139,17 +137,13 @@ export class MchgGameService {
     await this.runRound();
   }
 
-  private async showingRoundResultPhase() {
+  private async updateResultsPhase() {
     await this.updateScores();
-
-    this.gateway.updateStage(MchgStage.SHOWING_ROUND_RESULT);
-
-    await this.timerService.start(SHOWING_ROUND_RESULT_DURATION, (rem) => this.gateway.updateTimer(rem));
 
     this.roundIndex++;
     this.roundStage = MchgStage.CHOOSING_QUESTION;
 
-    await this.timerService.start(ROUND_DELAY_DURATION, (rem) => this.gateway.updateTimer(rem));
+    this.gateway.updateRound(this.roundIndex);
 
     await this.runRound();
   }
@@ -206,7 +200,7 @@ export class MchgGameService {
   }
 
   async requestAnswerMainQuestion(user: User) {
-    if (this.roundStage === MchgStage.SHOWING_ROUND_RESULT) {
+    if (this.roundStage === MchgStage.UPDATE_RESULTS) {
       throw new BadRequestException('Cannot request main question answer at this time');
     }
 

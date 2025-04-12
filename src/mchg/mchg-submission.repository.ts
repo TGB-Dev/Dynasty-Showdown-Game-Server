@@ -1,15 +1,11 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
 import mongoose, { Model } from 'mongoose';
-import { UserRepository } from '../user/user.repository';
 
 @Injectable()
 export class MchgSubmissionRepository {
-  constructor(
-    @InjectModel(MchgSubmission.name) private readonly mchgSubmissionModel: Model<MchgSubmission>,
-    private readonly userRepository: UserRepository,
-  ) {}
+  constructor(@InjectModel(MchgSubmission.name) private readonly mchgSubmissionModel: Model<MchgSubmission>) {}
 
   create(submission: any): Promise<MchgSubmission> {
     const newSubmission = new this.mchgSubmissionModel(submission);

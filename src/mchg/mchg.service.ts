@@ -45,7 +45,7 @@ export class MchgService {
   }
 
   runGame() {
-    this.gameService.runGame();
+    void this.gameService.runGame();
   }
 
   submitAnswer(answer: string, user: User) {
