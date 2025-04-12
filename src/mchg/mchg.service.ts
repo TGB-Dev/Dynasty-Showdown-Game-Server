@@ -75,6 +75,10 @@ export class MchgService {
     await this.gameService.selectQuestion(index);
   }
 
+  async isAbleToAnswerMainQuestion(user: User) {
+    return await this.gameService.isAbleToAnswerMainQuestion(user);
+  }
+
   async requestAnswerMainQuestion(user: User) {
     await this.gameService.requestAnswerMainQuestion(user);
   }

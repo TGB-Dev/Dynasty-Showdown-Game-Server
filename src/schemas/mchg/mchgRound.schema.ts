@@ -16,7 +16,7 @@ export class MchgRound extends BaseModel {
   @Type(() => MchgImage)
   image: MchgImage;
 
-  @ApiProperty({ description: "Round's questions", type: [MchgQuestion] })
+  @ApiProperty({ description: "Round's questions", type: [() => MchgQuestion] })
   @ValidateNested({ each: true })
   @Type(() => MchgQuestion)
   @Expose({ groups: [UserRole.ADMIN, UserRole.PLAYER] })

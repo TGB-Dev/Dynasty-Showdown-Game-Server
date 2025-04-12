@@ -89,6 +89,10 @@ export class MchgGameService {
     return this.submissionRepository.create(submission);
   }
 
+  async isAbleToAnswerMainQuestion(user: User) {
+    return (await this.answerQueueService.findByUser(user)) === null;
+  }
+
   async requestAnswerMainQuestion(user: User) {
     if (this.roundStage === MchgStage.UPDATE_RESULTS) {
       throw new BadRequestException('Cannot request main question answer at this time');
@@ -197,6 +201,7 @@ export class MchgGameService {
   }
 
   private async choosingQuestionPhase() {
+    await this.answerQueueService.clear();
     this.gateway.updateStage(MchgStage.CHOOSING_QUESTION);
 
     const currentRound = await this.roundRepository.getByOrder(this.roundIndex);

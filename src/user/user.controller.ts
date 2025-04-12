@@ -34,7 +34,7 @@ export class UserController {
   }
 
   @Post('score')
-  @ApiCreatedResponse({ description: 'Score updated successfully', type: User })
+  @ApiCreatedResponse({ description: 'Score updated successfully', type: () => User })
   @ApiUnauthorizedResponse()
   @ApiBadRequestResponse()
   @UseGuards(AuthGuard(UserRole.ADMIN))

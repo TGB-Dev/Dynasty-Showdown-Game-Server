@@ -7,16 +7,21 @@ export class MchgAnswerQueueService {
   constructor(private readonly mainQuestionQueueRepository: MchgMainQuestionQueueRepository) {}
 
   async enqueue(user: User) {
-    if (!(await this.mainQuestionQueueRepository.findByUser(user)))
+    if (!(await this.findByUser(user))) {
       return this.mainQuestionQueueRepository.create(user);
+    }
+  }
+
+  async findByUser(user: User) {
+    return await this.mainQuestionQueueRepository.findByUser(user);
   }
 
   dequeue() {
-    return this.mainQuestionQueueRepository.deleteFirstCreated();
+    return this.mainQuestionQueueRepository.markFirstCreated();
   }
 
   async top() {
-    const queue = await this.mainQuestionQueueRepository.getAll();
+    const queue = await this.mainQuestionQueueRepository.getAllUnselected();
 
     if (queue.length === 0) throw new BadRequestException('Empty queue');
     return queue[0].toObject();

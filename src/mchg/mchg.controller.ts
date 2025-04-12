@@ -75,7 +75,7 @@ export class MchgController {
 
   @Post('rounds')
   @ApiOperation({ summary: 'Create a compete round' })
-  @ApiCreatedResponse({ type: CreateRoundResDto })
+  @ApiCreatedResponse({ type: () => CreateRoundResDto })
   @ApiBadRequestResponse({ description: 'Bad request' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
@@ -106,7 +106,7 @@ export class MchgController {
 
   @Get('rounds')
   @ApiOperation({ summary: 'Get all compete rounds' })
-  @ApiOkResponse({ type: [GetAllRoundsResDto] })
+  @ApiOkResponse({ type: [() => GetAllRoundsResDto] })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   getAllRounds(): Promise<GetAllRoundsResDto[]> {
@@ -115,7 +115,7 @@ export class MchgController {
 
   @Get('rounds/current')
   @ApiOperation({ summary: 'Get the current compete round' })
-  @ApiCreatedResponse({ type: GetAllRoundsResDto })
+  @ApiCreatedResponse({ type: () => GetAllRoundsResDto })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN, UserRole.PLAYER))
   @UseInterceptors(RoleBasedClassSerializer)
@@ -138,7 +138,7 @@ export class MchgController {
 
   @Get('rounds/current/questions')
   @ApiOperation({ summary: "Get the current round's questions" })
-  @ApiOkResponse({ type: [MchgQuestion] })
+  @ApiOkResponse({ type: [() => MchgQuestion] })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
   async getCurrentRoundQuestions() {
@@ -156,7 +156,7 @@ export class MchgController {
 
   @Get('round/current/currentQuestion')
   @ApiOperation({ summary: "Get the current round's current question" })
-  @ApiOkResponse({ type: [GetCurrentRoundCurrentQuestionResDto] })
+  @ApiOkResponse({ type: [() => GetCurrentRoundCurrentQuestionResDto] })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.PLAYER))
   @UseInterceptors()
@@ -175,6 +175,15 @@ export class MchgController {
   @UseGuards(AuthGuard())
   async getCurrentQuestionAnswer(@Req() { user }: AuthRequest) {
     return await this.mchgService.getCurrentQuestionAnswer(user._id!);
+  }
+
+  @Post('mainQuestion/ability')
+  @ApiOperation({ summary: "Get the current round's main question answering ability" })
+  @ApiOkResponse({ type: Boolean })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  isAbleToAnswerMainQuestion(@Req() { user }: AuthRequest) {
+    return this.mchgService.isAbleToAnswerMainQuestion(user);
   }
 
   @Post('mainQuestion/request')

@@ -40,7 +40,7 @@ export class CdvqController {
   @Get('questions')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   @ApiOperation({ summary: 'Get all questions' })
-  @ApiResponse({ status: 200, description: 'Returns list of questions', type: [CdvqQuestion] })
+  @ApiResponse({ status: 200, description: 'Returns list of questions', type: [() => CdvqQuestion] })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
   async getAllQuestions(): Promise<CdvqQuestion[]> {
     return await this.cdvqService.getQuestions();
@@ -51,7 +51,7 @@ export class CdvqController {
   @ApiOperation({ summary: 'Create a new question' })
   @ApiResponse({ status: 201, description: 'Question created successfully' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  @ApiBody({ type: QuestionDto })
+  @ApiBody({ type: () => QuestionDto })
   createQuestion(@Body() questionDto: QuestionDto) {
     return this.cdvqService.createQuestion(questionDto);
   }
@@ -74,7 +74,7 @@ export class CdvqController {
   @ApiResponse({ status: 200, description: 'Question updated successfully' })
   @ApiResponse({ status: 404, description: 'Question not found' })
   @ApiResponse({ status: 500, description: 'Internal Server Error' })
-  @ApiBody({ type: QuestionDto })
+  @ApiBody({ type: () => QuestionDto })
   updateQuestion(@Param('id') id: string, @Body() questionDto: QuestionDto) {
     return this.cdvqService.updateQuestion(id, questionDto);
   }

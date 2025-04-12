@@ -20,12 +20,16 @@ export class MchgMainQuestionQueueRepository {
     return this.mchgMainAnswerQueueModel.findOne({ user: user }).exec();
   }
 
-  deleteFirstCreated() {
-    return this.mchgMainAnswerQueueModel.findOneAndDelete({}).sort({ created_at: 'asc' }).exec();
+  markFirstCreated() {
+    return this.mchgMainAnswerQueueModel.findOneAndUpdate({}, { selected: true }).sort({ created_at: 'asc' }).exec();
   }
 
   getAll() {
     return this.mchgMainAnswerQueueModel.find({}).populate('user').sort({ created_at: 'asc' }).exec();
+  }
+
+  getAllUnselected() {
+    return this.mchgMainAnswerQueueModel.find({ selected: false }).populate('user').sort({ created_at: 'asc' }).exec();
   }
 
   deleteAll() {
