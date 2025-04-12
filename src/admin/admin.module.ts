@@ -5,9 +5,10 @@ import { CdvqModule } from '../cdvq/cdvq.module';
 import { MchgModule } from '../mchg/mchg.module';
 import { TgoModule } from '../tgo/tgo.module';
 import { RokModule } from '../rok/rok.module';
+import { GameModule } from '../game/game.module';
 
 @Module({
-  imports: [UserModule, CdvqModule, MchgModule, TgoModule, RokModule],
+  imports: [UserModule, GameModule, CdvqModule, MchgModule, TgoModule, RokModule],
   controllers: [AdminController],
   providers: [],
   exports: [],

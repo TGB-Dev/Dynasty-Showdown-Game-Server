@@ -18,6 +18,9 @@ export class TgoUserData extends BaseModel {
   @Prop({ default: 0 })
   attackScore: number;
 
+  @Prop({ default: 0 })
+  changeOnScore: number;
+
   @Prop({ required: true })
   currentRound: number;
 

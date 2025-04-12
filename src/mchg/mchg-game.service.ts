@@ -10,6 +10,8 @@ import { MchgAnswerQueueService } from './mchg-answer-queue.service';
 import { UserRepository } from '../user/user.repository';
 import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
 import mongoose from 'mongoose';
+import { GameRepository } from '../game/game.repository';
+import { Room } from '../common/enum/room.enum';
 
 const MAIN_ANSWER_POINTS = 150;
 const SUB_ANSWER_POINTS = 15;
@@ -30,6 +32,7 @@ export class MchgGameService {
     private readonly questionRepository: MchgQuestionRepository,
     private readonly submissionRepository: MchgSubmissionRepository,
     private readonly answerQueueService: MchgAnswerQueueService,
+    private readonly gameRepository: GameRepository,
     private readonly userRepository: UserRepository,
   ) {}
 
@@ -45,6 +48,7 @@ export class MchgGameService {
   async runGame() {
     await this.reset();
     this.gameState = MchgGameState.RUNNING;
+    await this.gameRepository.setStartedGame(Room.MCHG);
 
     void (async () => {
       await this.timerService.start(3, (rem) => this.gateway.updateRunGameTimer(rem));
@@ -174,6 +178,8 @@ export class MchgGameService {
       this.gameState = MchgGameState.NOT_RUNNING;
       this.gateway.endGame();
       this.gateway.leaveRoom();
+      await this.gameRepository.unsetRunningGame(Room.MCHG);
+      await this.gameRepository.unsetStartedGame(Room.MCHG);
       return;
     }
 

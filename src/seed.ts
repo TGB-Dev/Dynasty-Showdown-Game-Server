@@ -6,6 +6,8 @@ import { getModelToken } from '@nestjs/mongoose';
 import { UserRole } from './common/enum/roles.enum';
 import { INestApplicationContext } from '@nestjs/common';
 import { RokMatrixState } from './schemas/rok/rokMatrixState.schema';
+import { Game } from './schemas/game.schema';
+import { Room } from './common/enum/room.enum';
 
 // Ring 0 starts from the center of the matrix
 // And increases as the cell is becoming farther from the center
@@ -26,6 +28,7 @@ async function bootstrap() {
   const app = await NestFactory.createApplicationContext(AppModule);
 
   await seedUsers(app);
+  await seedGames(app);
   await seedRokMatrix(app);
 
   console.log('Database seeding successfully!');
@@ -40,7 +43,6 @@ async function seedUsers(app: INestApplicationContext) {
     {
       username: 'admin',
       password: 'admin',
-      teamName: 'TGB | Dynasty Showdown',
       role: UserRole.ADMIN,
     },
   ];
@@ -48,6 +50,33 @@ async function seedUsers(app: INestApplicationContext) {
   await userModel.deleteMany({});
 
   await userModel.insertMany(seedUsers);
+}
+
+async function seedGames(app: INestApplicationContext) {
+  const gameModel = app.get<Model<Game>>(getModelToken(Game.name));
+
+  const seedGames: Game[] = [
+    {
+      game: Room.CDVQ,
+      running: false,
+    },
+    {
+      game: Room.MCHG,
+      running: false,
+    },
+    {
+      game: Room.TGO,
+      running: false,
+    },
+    {
+      game: Room.ROK,
+      running: false,
+    },
+  ];
+
+  await gameModel.deleteMany({});
+
+  await gameModel.insertMany(seedGames);
 }
 
 async function seedRokMatrix(app: INestApplicationContext) {

@@ -15,11 +15,10 @@ export class UserRepository {
       .exec();
   }
 
-  async createNewUser(username: string, password: string, teamName: string) {
+  async createNewUser(username: string, password: string) {
     const newUser = new this.userModel({
       username: username,
       password: password,
-      teamName: teamName,
     });
 
     return await newUser.save();

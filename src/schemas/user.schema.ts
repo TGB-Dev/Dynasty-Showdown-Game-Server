@@ -13,11 +13,6 @@ export class User extends BaseModel {
   @Prop({ required: true })
   password: string;
 
-  @ApiProperty()
-  @ApiProperty()
-  @Prop({ required: true })
-  teamName: string;
-
   @ApiProperty({ enum: UserRole })
   @Prop({ required: false, type: String, enum: UserRole, default: UserRole.PLAYER })
   role: UserRole;

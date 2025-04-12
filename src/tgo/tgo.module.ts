@@ -12,6 +12,7 @@ import { TgoSubmissionRepository } from './tgo-submission.repository';
 import { TgoTimerService } from './tgo-timer.service';
 import { TgoGameService } from './tgo-game.service';
 import { TgoGateway } from './tgo.gateway';
+import { GameModule } from '../game/game.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { TgoGateway } from './tgo.gateway';
       },
     ]),
     UserModule,
+    GameModule,
   ],
   controllers: [TgoController],
   providers: [

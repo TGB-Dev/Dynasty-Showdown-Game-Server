@@ -7,6 +7,8 @@ import { TgoUserDataRepository } from './tgo-user-data.repository';
 import { TgoStage } from '../common/enum/tgo/tgo-stage.enum';
 import { UserRepository } from '../user/user.repository';
 import { TgoQuestionPackPunishedScore } from '../common/enum/tgo/tgo-question-pack-punished-score.enum';
+import { GameRepository } from '../game/game.repository';
+import { Room } from '../common/enum/room.enum';
 
 const READY_DURATION = 3;
 const CHOOSING_AND_ANSWERING_DURATION = 70;
@@ -23,6 +25,7 @@ export class TgoGameService {
     private readonly gateway: TgoGateway,
     private readonly TgoUserDataRepository: TgoUserDataRepository,
     private readonly userRepository: UserRepository,
+    private readonly gameRepository: GameRepository,
   ) {}
 
   async startGame() {
@@ -34,19 +37,18 @@ export class TgoGameService {
     this.currentRound = 10;
 
     this.gameState = TgoGameState.PLAYING;
+    await this.gameRepository.setStartedGame(Room.TGO);
     void (async () => {
       await this.startRound();
     })();
   }
 
-  stopGame() {
+  async stopGame() {
     if (this.gameState === TgoGameState.NOT_PLAYING) {
       throw new BadRequestException('Game not started');
     }
 
-    this.endGame();
-    this.gateway.leaveRoom();
-    this.timerService.stop();
+    await this.endGame();
   }
 
   pauseGame() {
@@ -90,8 +92,7 @@ export class TgoGameService {
     console.log('Starting round', this.currentRound);
 
     if (this.currentRound === 0) {
-      this.gateway.emitGameEnded();
-      this.endGame();
+      await this.endGame();
       return;
     }
 
@@ -163,10 +164,14 @@ export class TgoGameService {
     );
   }
 
-  endGame() {
+  async endGame() {
     this.gameState = TgoGameState.NOT_PLAYING;
     this.roundState = TgoRoundState.WAITING;
     this.gateway.emitGameEnded();
+    this.gateway.leaveRoom();
+    await this.gameRepository.unsetRunningGame(Room.TGO);
+    await this.gameRepository.unsetStartedGame(Room.TGO);
+    this.timerService.stop();
   }
 
   getRoundState() {

@@ -10,6 +10,7 @@ import { CdvqTimerService } from './cdvq-timer.service';
 import { CdvqGameService } from './cdvq-game.service';
 import { CdvqSubmission, CdvqSubmissionSchema } from '../schemas/cdvq/cdvq-submission.schema';
 import { CdvqSubmissionRepository } from './cdvq-submission.repository';
+import { GameModule } from '../game/game.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { CdvqSubmissionRepository } from './cdvq-submission.repository';
       },
     ]),
     UserModule,
+    GameModule,
   ],
   controllers: [CdvqController],
   providers: [

@@ -134,14 +134,17 @@ export class TgoService {
       switch (submissionAnswers.length) {
         case TgoQuestionPack.PACK_3.valueOf():
           user.score += TgoQuestionPackScore.PACK_3;
+          tgoUserData.changeOnScore = TgoQuestionPackScore.PACK_3;
           tgoUserData.attackScore = TgoQuestionPackPunishedScore.PACK_3;
           break;
         case TgoQuestionPack.PACK_5.valueOf():
           user.score += TgoQuestionPackScore.PACK_5;
+          tgoUserData.changeOnScore = TgoQuestionPackScore.PACK_5;
           tgoUserData.attackScore = TgoQuestionPackPunishedScore.PACK_5;
           break;
         case TgoQuestionPack.PACK_7.valueOf():
           user.score += TgoQuestionPackScore.PACK_7;
+          tgoUserData.changeOnScore = TgoQuestionPackScore.PACK_7;
           tgoUserData.attackScore = TgoQuestionPackPunishedScore.PACK_7;
           break;
       }
@@ -149,14 +152,17 @@ export class TgoService {
       switch (submissionAnswers.length) {
         case TgoQuestionPack.PACK_3.valueOf():
           user.score += TgoQuestionPackPunishedScore.PACK_3;
+          tgoUserData.changeOnScore = TgoQuestionPackPunishedScore.PACK_3;
           tgoUserData.attackScore = 0;
           break;
         case TgoQuestionPack.PACK_5.valueOf():
           user.score += TgoQuestionPackPunishedScore.PACK_5;
+          tgoUserData.changeOnScore = TgoQuestionPackPunishedScore.PACK_5;
           tgoUserData.attackScore = 0;
           break;
         case TgoQuestionPack.PACK_7.valueOf():
           user.score += TgoQuestionPackPunishedScore.PACK_7;
+          tgoUserData.changeOnScore = TgoQuestionPackPunishedScore.PACK_7;
           tgoUserData.attackScore = 0;
           break;
       }
@@ -221,6 +227,11 @@ export class TgoService {
   async canAttack(username: string) {
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
     return tgoUserData.canAttack;
+  }
+
+  async getChangeOnScore(username: string) {
+    const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
+    return tgoUserData.changeOnScore;
   }
 
   startGame() {

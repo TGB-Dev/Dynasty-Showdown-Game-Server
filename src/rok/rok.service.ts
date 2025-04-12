@@ -5,6 +5,8 @@ import { NewRokQuestionDto, RokAnswerQuestionDto, UpdateRokQuestionDto } from '.
 import { RokStage } from '../common/enum/rok/rokStage.enum';
 import { UserRepository } from '../user/user.repository';
 import { RokTimerService } from './rok-timer.service';
+import { GameRepository } from '../game/game.repository';
+import { Room } from '../common/enum/room.enum';
 
 const CHOOSE_CITY_TIMEOUT = 20;
 const ATTACK_TIMEOUT = 40;
@@ -24,9 +26,11 @@ export class RokService implements OnModuleDestroy {
     private readonly rokRepository: RokRepository,
     private readonly rokGateway: RokGateway,
     private readonly userRepository: UserRepository,
+    private readonly gameRepository: GameRepository,
   ) {}
 
-  runGame() {
+  async runGame() {
+    await this.gameRepository.setStartedGame(Room.ROK);
     void (async () => {
       await this.timerService.start(3, (rem) => this.rokGateway.updateRunGameTimer(rem));
       void this.runRound();
@@ -62,7 +66,7 @@ export class RokService implements OnModuleDestroy {
 
   async runRound() {
     if (this.currentRound >= this.roundCount) {
-      this.endGame();
+      await this.endGame();
     }
 
     if (this.currentStage === RokStage.PAUSED) {
@@ -118,9 +122,11 @@ export class RokService implements OnModuleDestroy {
     }
   }
 
-  endGame() {
+  async endGame() {
     this.rokGateway.endGame();
     this.timerService.stop();
+    await this.gameRepository.unsetRunningGame(Room.ROK);
+    await this.gameRepository.unsetStartedGame(Room.ROK);
   }
 
   async answerQuestion(questionId: string, teamUsername: string, dto: RokAnswerQuestionDto) {

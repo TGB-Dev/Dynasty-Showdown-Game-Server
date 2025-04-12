@@ -8,6 +8,8 @@ import { CdvqGateway } from './cdvq.gateway';
 import { CdvqQuestionStatus } from '../common/enum/cdvq/cdvq-question-status.enum';
 import { User } from '../schemas/user.schema';
 import { CdvqSubmissionRepository } from './cdvq-submission.repository';
+import { GameRepository } from '../game/game.repository';
+import { Room } from '../common/enum/room.enum';
 
 const ROUND_DURATION = 30;
 const READY_DURATION = 3;
@@ -39,6 +41,7 @@ export class CdvqGameService {
     private readonly timerService: CdvqTimerService,
     private readonly questionRepository: CdvqQuestionRepository,
     private readonly submissionRepository: CdvqSubmissionRepository,
+    private readonly gameRepository: GameRepository,
     private readonly gateway: CdvqGateway,
   ) {}
 
@@ -49,6 +52,7 @@ export class CdvqGameService {
 
     await this.resetQuestions();
 
+    await this.gameRepository.setStartedGame(Room.CDVQ);
     this.gameState = CdvqGameState.PLAYING;
     void (async () => {
       await this.timerService.start(READY_DURATION, (timeLeft) => this.gateway.emitReadyTimer(timeLeft));
@@ -56,14 +60,12 @@ export class CdvqGameService {
     })();
   }
 
-  stopGame() {
+  async stopGame() {
     if (this.gameState === CdvqGameState.NOT_PLAYING) {
       throw new BadRequestException('Game already stopped');
     }
 
-    this.endGame();
-    this.gateway.leaveRoom();
-    this.timerService.stop();
+    await this.endGame();
   }
 
   pauseGame() {
@@ -101,12 +103,64 @@ export class CdvqGameService {
     })();
   }
 
+  getCurrentQuestion() {
+    return this.currentQuestion;
+  }
+
+  async answerCurrentQuestion(user: User, answer: string) {
+    if (this.gameState !== CdvqGameState.PLAYING) {
+      throw new BadRequestException('Game is not currently playing');
+    }
+
+    if (this.roundState !== CdvqRoundState.ANSWERING) {
+      throw new BadRequestException('Round is not currently answering');
+    }
+
+    if (!this.currentQuestion) {
+      throw new BadRequestException('No current question available');
+    }
+
+    if (await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion._id!))
+      throw new BadRequestException('User has already submitted an answer');
+
+    const submission = {
+      user,
+      question: this.currentQuestion._id,
+      answer,
+    };
+
+    return this.submissionRepository.create(submission);
+  }
+
+  async getRoundResults() {
+    if (this.roundState !== CdvqRoundState.SHOWING_RESULT) {
+      throw new BadRequestException('Round is not currently showing result');
+    }
+
+    return (await this.submissionRepository.getAll()).map((sub) => sub.toObject());
+  }
+
+  async getCurrentQuestionAnswer(user: User) {
+    if (this.roundState !== CdvqRoundState.SHOWING_ANSWER) {
+      throw new BadRequestException('Game is not currently showing answer');
+    }
+
+    const submission = (
+      await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion!._id!)
+    )?.toObject();
+
+    return {
+      answer: this.currentQuestion!.answer,
+      correct: !submission ? false : submission.isCorrect,
+    };
+  }
+
   private async startRound() {
     await this.submissionRepository.deleteAll();
     this.currentQuestion = (await this.questionRepository.getFirstWaiting())?.toObject() ?? null;
 
     if (this.currentQuestion === null) {
-      this.endGame();
+      await this.endGame();
       return;
     }
 
@@ -169,9 +223,13 @@ export class CdvqGameService {
     await this.timerService.start(SHOW_RESULT_DURATION, (timeLeft) => this.gateway.emitTimerUpdate(timeLeft));
   }
 
-  private endGame() {
+  private async endGame() {
     this.gameState = CdvqGameState.NOT_PLAYING;
     this.gateway.emitGameEnded();
+    this.gateway.leaveRoom();
+    this.timerService.stop();
+    await this.gameRepository.unsetRunningGame(Room.CDVQ);
+    await this.gameRepository.unsetStartedGame(Room.CDVQ);
   }
 
   private async resetQuestions() {
@@ -180,57 +238,5 @@ export class CdvqGameService {
     await Promise.all(
       questions.map((question) => this.questionRepository.updateStatus(question, CdvqQuestionStatus.WAITING)),
     );
-  }
-
-  getCurrentQuestion() {
-    return this.currentQuestion;
-  }
-
-  async answerCurrentQuestion(user: User, answer: string) {
-    if (this.gameState !== CdvqGameState.PLAYING) {
-      throw new BadRequestException('Game is not currently playing');
-    }
-
-    if (this.roundState !== CdvqRoundState.ANSWERING) {
-      throw new BadRequestException('Round is not currently answering');
-    }
-
-    if (!this.currentQuestion) {
-      throw new BadRequestException('No current question available');
-    }
-
-    if (await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion._id!))
-      throw new BadRequestException('User has already submitted an answer');
-
-    const submission = {
-      user,
-      question: this.currentQuestion._id,
-      answer,
-    };
-
-    return this.submissionRepository.create(submission);
-  }
-
-  async getRoundResults() {
-    if (this.roundState !== CdvqRoundState.SHOWING_RESULT) {
-      throw new BadRequestException('Round is not currently showing result');
-    }
-
-    return (await this.submissionRepository.getAll()).map((sub) => sub.toObject());
-  }
-
-  async getCurrentQuestionAnswer(user: User) {
-    if (this.roundState !== CdvqRoundState.SHOWING_ANSWER) {
-      throw new BadRequestException('Game is not currently showing answer');
-    }
-
-    const submission = (
-      await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion!._id!)
-    )?.toObject();
-
-    return {
-      answer: this.currentQuestion!.answer,
-      correct: !submission ? false : submission.isCorrect,
-    };
   }
 }

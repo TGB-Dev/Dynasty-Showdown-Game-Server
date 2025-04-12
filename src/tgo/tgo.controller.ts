@@ -76,6 +76,7 @@ export class TgoController {
   async canAttackOpponent(@Request() { user }: AuthRequest) {
     return {
       canAttack: await this.tgoService.canAttack(user.username),
+      changeOnScore: await this.tgoService.getChangeOnScore(user.username),
     };
   }
 

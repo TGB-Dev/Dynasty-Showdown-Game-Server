@@ -8,9 +8,6 @@ export class GetMeResDto {
   username: string;
 
   @Expose()
-  teamName: string;
-
-  @Expose()
   role: UserRole;
 }
 

@@ -15,6 +15,7 @@ import { MchgMainQuestionQueueRepository } from './mchg-main-question-queue.repo
 import { MchgGameService } from './mchg-game.service';
 import { MchgTimerService } from './mchg-timer.service';
 import { MchgAnswerQueueService } from './mchg-answer-queue.service';
+import { GameModule } from '../game/game.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { MchgAnswerQueueService } from './mchg-answer-queue.service';
       { name: MchgMainQuestionQueue.name, schema: MchgMainQuestionQueueSchema },
     ]),
     UserModule,
+    GameModule,
   ],
   providers: [
     MchgGateway,

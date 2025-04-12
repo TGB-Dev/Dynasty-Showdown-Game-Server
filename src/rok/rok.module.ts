@@ -9,10 +9,12 @@ import { RokRepository } from './rok.repository';
 import { RokQuestion, RokQuestionSchema } from '../schemas/rok/rokQuestion.schema';
 import { UserModule } from '../user/user.module';
 import { RokTimerService } from './rok-timer.service';
+import { GameModule } from '../game/game.module';
 
 @Module({
   imports: [
     UserModule,
+    GameModule,
     MongooseModule.forFeature([
       { name: RokAttack.name, schema: RokAttackSchema },
       {
