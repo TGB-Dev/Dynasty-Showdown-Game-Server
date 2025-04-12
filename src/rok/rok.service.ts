@@ -62,7 +62,7 @@ export class RokService implements OnModuleDestroy {
 
   async runRound() {
     if (this.currentRound >= this.roundCount) {
-      this.rokGateway.endGame();
+      this.endGame();
     }
 
     if (this.currentStage === RokStage.PAUSED) {
@@ -116,6 +116,11 @@ export class RokService implements OnModuleDestroy {
       this.currentRound++;
       await this.runRound();
     }
+  }
+
+  endGame() {
+    this.rokGateway.endGame();
+    this.timerService.stop();
   }
 
   async answerQuestion(questionId: string, teamUsername: string, dto: RokAnswerQuestionDto) {
