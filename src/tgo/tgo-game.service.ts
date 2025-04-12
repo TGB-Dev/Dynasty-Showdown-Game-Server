@@ -7,8 +7,8 @@ import { TgoUserDataRepository } from './tgo-user-data.repository';
 import { TgoStage } from '../common/enum/tgo/tgo-stage.enum';
 import { UserRepository } from '../user/user.repository';
 import { TgoQuestionPackPunishedScore } from '../common/enum/tgo/tgo-question-pack-punished-score.enum';
-import { GameRepository } from '../game/game.repository';
 import { Room } from '../common/enum/room.enum';
+import { GameRepository } from '../game/game.repository';
 
 const READY_DURATION = 3;
 const CHOOSING_AND_ANSWERING_DURATION = 70;
