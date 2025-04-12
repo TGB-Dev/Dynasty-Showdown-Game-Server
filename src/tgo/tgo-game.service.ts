@@ -158,7 +158,7 @@ export class TgoGameService {
     const usersData = await this.TgoUserDataRepository.findAll();
     await Promise.all(
       usersData.map(async (userData) => {
-        userData.canAttack = false;
+        userData.attackScore = 0;
         await userData.save();
       }),
     );

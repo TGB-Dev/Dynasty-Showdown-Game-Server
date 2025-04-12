@@ -111,7 +111,6 @@ export class TgoService {
     const user = (await this.userRepository.findUserByUsername(username))!;
     const currentQuestions = tgoUserData.currentQuestions;
 
-    let isCorrect = true;
     const answers = await Promise.all(
       currentQuestions.map(async (question) => {
         const questionObject = await this.tgoQuestionRepository.findById(question.questionId);
@@ -130,9 +129,18 @@ export class TgoService {
     console.log('correctAnswers', correctAnswers);
     console.log('submissionAnswers', submissionAnswers);
 
-    if (correctAnswers !== submissionAnswers) isCorrect = false;
-
-    if (lateSubmitted) isCorrect = false;
+    let isCorrect = true;
+    for (let i = 0; i < correctAnswers.length; i++) {
+      if (correctAnswers[i] !== submissionAnswers[i]) {
+        isCorrect = false;
+        console.log('incorrect case A');
+        break;
+      }
+    }
+    if (lateSubmitted) {
+      isCorrect = false;
+      console.log('incorrect case B');
+    }
 
     if (isCorrect) {
       switch (submissionAnswers.length) {
@@ -209,7 +217,7 @@ export class TgoService {
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
     const opponentUser = await this.userRepository.findUserByUsername(opponentUsername);
 
-    if (!tgoUserData.canAttack) throw new BadRequestException("You don't have permission to attack");
+    if (!(tgoUserData.attackScore < 0)) throw new BadRequestException("You don't have permission to attack");
 
     if (!opponentUser) {
       throw new BadRequestException('Opponent not found');
@@ -228,9 +236,9 @@ export class TgoService {
     };
   }
 
-  async canAttack(username: string) {
+  async getAttackScore(username: string) {
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
-    return tgoUserData.canAttack;
+    return tgoUserData.attackScore;
   }
 
   async getChangeOnScore(username: string) {
