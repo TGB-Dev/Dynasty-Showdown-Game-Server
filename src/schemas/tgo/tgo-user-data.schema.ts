@@ -37,6 +37,9 @@ export class TgoUserData extends BaseModel {
 
   @Prop({ required: true })
   currentRound: number;
+
+  @Prop({ default: false })
+  canAttack: boolean;
 }
 
 export const TgoUserDataSchema = SchemaFactory.createForClass(TgoUserData);

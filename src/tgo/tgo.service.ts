@@ -202,6 +202,8 @@ export class TgoService {
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
     const opponentUser = await this.userRepository.findUserByUsername(opponentUsername);
 
+    if (!tgoUserData.canAttack) throw new BadRequestException("You don't have permission to attack");
+
     if (!opponentUser) {
       throw new BadRequestException('Opponent not found');
     }
@@ -217,6 +219,11 @@ export class TgoService {
     return {
       message: 'Opponent attack successful',
     };
+  }
+
+  async canAttack(username: string) {
+    const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
+    return tgoUserData.canAttack;
   }
 
   startGame() {

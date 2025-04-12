@@ -79,6 +79,7 @@ export class TgoGameService {
       }
 
       await this.processScore();
+      await this.resetGame();
 
       this.currentRound--;
       await this.startRound();
@@ -99,7 +100,9 @@ export class TgoGameService {
 
     await this.choosingAndAnsweringPhase();
     await this.attackingAndShowingResultPhase();
+
     await this.processScore();
+    await this.resetGame();
 
     this.currentRound--;
     await this.startRound();
@@ -146,6 +149,16 @@ export class TgoGameService {
 
         user.score += TgoQuestionPackPunishedScore.PACK_3;
         await user.save();
+      }),
+    );
+  }
+
+  async resetGame() {
+    const usersData = await this.TgoUserDataRepository.findAll();
+    await Promise.all(
+      usersData.map(async (userData) => {
+        userData.canAttack = false;
+        await userData.save();
       }),
     );
   }

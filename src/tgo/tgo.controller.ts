@@ -69,6 +69,14 @@ export class TgoController {
     return this.tgoService.attackOpponent(user.username, attackOpponentDto.username);
   }
 
+  @Get('/opponents/can-attack')
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  async canAttackOpponent(@Request() { user }: AuthRequest) {
+    return {
+      canAttack: await this.tgoService.canAttack(user.username),
+    };
+  }
+
   @Post('/game/start')
   @UseGuards(AuthGuard(UserRole.ADMIN))
   startGame() {
