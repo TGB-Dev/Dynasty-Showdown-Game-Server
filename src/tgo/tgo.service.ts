@@ -112,8 +112,7 @@ export class TgoService {
       answer: number;
     }[],
   ) {
-    if (this.tgoGameService.getRoundState() !== TgoRoundState.CHOOSING_AND_ANSWERING)
-      throw new BadRequestException('You need to wait until choosing and answering phase begin');
+    const lateSubmitted = this.tgoGameService.getRoundState() !== TgoRoundState.CHOOSING_AND_ANSWERING;
 
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
     const user = (await this.userRepository.findUserByUsername(username))!;
@@ -135,6 +134,8 @@ export class TgoService {
         break;
       }
     }
+
+    if (lateSubmitted) isCorrect = false;
 
     if (isCorrect) {
       switch (submissionPayload.length) {
