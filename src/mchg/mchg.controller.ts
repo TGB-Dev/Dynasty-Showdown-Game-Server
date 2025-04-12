@@ -18,6 +18,7 @@ import {
   CreateRoundReqDto,
   CreateRoundResDto,
   GetAllRoundsResDto,
+  GetCurrentRequestUserResDto,
   GetCurrentRoundCurrentQuestionResDto,
   GetCurrentRoundResDto,
   SubmitAnswerReqDto,
@@ -184,7 +185,7 @@ export class MchgController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard())
   async getCurrentQuestionAnswer(@Req() { user }: AuthRequest) {
-    return await this.mchgService.getCurrentQuestionAnswer(user.username);
+    return await this.mchgService.getCurrentQuestionAnswer(user._id!);
   }
 
   @Post('mainQuestion/request')
@@ -212,5 +213,13 @@ export class MchgController {
   @UseGuards(AuthGuard(UserRole.ADMIN))
   async rewardMainQuestion() {
     await this.mchgService.rewardMainQuestion();
+  }
+
+  @Get('mainQuestion/currentRequestUser')
+  @ApiOperation({ summary: 'Get the current user in the main question queue' })
+  @ApiOkResponse({ description: 'Current user in the main question queue' })
+  @ApiUnauthorizedResponse({ description: 'Unauthorized' })
+  getMainQuestionCurrentRequestUser(): Promise<GetCurrentRequestUserResDto> {
+    return this.mchgService.getCurrentRequestUser();
   }
 }

@@ -8,39 +8,39 @@ export class TgoGateway {
   @WebSocketServer() private readonly server: Server;
 
   joinRoom() {
-    this.server.socketsJoin(Room.CDVQ);
-    this.sendMessage('room joined');
+    this.server.socketsJoin(Room.TGO);
+    this.server.emit('joinedRoom', Room.TGO);
   }
 
   leaveRoom() {
-    this.server.socketsLeave(Room.CDVQ);
+    this.server.socketsLeave(Room.TGO);
   }
 
   sendMessage(message: string) {
-    this.server.to(Room.CDVQ).emit('message', message);
+    this.server.to(Room.TGO).emit('message', message);
   }
 
   emitTimerUpdate(remainingTime: number) {
-    this.server.emit('timerUpdate', remainingTime);
+    this.server.to(Room.TGO).emit('timerUpdate', remainingTime);
   }
 
   emitGameEnded() {
-    this.server.emit('gameEnded');
+    this.server.to(Room.TGO).emit('gameEnded');
   }
 
   emitGamePaused() {
-    this.server.emit('gamePaused');
+    this.server.to(Room.TGO).emit('gamePaused');
   }
 
   emitGameResumed() {
-    this.server.emit('gameResumed');
+    this.server.to(Room.TGO).emit('gameResumed');
   }
 
   emitUpdateStage(stage: TgoStage) {
-    this.server.emit('updateStage', stage);
+    this.server.to(Room.TGO).emit('updateStage', stage);
   }
 
   emitReadyTimer(remainingTime: number) {
-    this.server.emit('readyTimer', remainingTime);
+    this.server.to(Room.TGO).emit('readyTimer', remainingTime);
   }
 }

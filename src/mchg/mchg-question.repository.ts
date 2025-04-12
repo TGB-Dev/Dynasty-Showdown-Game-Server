@@ -16,12 +16,16 @@ export class MchgQuestionRepository {
     return Promise.all(questions.map((question) => this.create(question)));
   }
 
-  async findById(id: string | mongoose.Types.ObjectId): Promise<MchgQuestion | null> {
-    return (await this.mchgQuestionModel.findById(id).exec())?.toObject() ?? null;
+  async findById(id: string | mongoose.Types.ObjectId) {
+    return await this.mchgQuestionModel.findById(id).exec();
   }
 
   async updateSelected(id: string | mongoose.Types.ObjectId, selected: boolean): Promise<MchgQuestion | null> {
     return await this.mchgQuestionModel.findByIdAndUpdate(id, { selected }, { new: true, runValidators: true }).exec();
+  }
+
+  async updateSolved(id: string | mongoose.Types.ObjectId, solved: boolean): Promise<MchgQuestion | null> {
+    return await this.mchgQuestionModel.findByIdAndUpdate(id, { solved }, { new: true, runValidators: true }).exec();
   }
 
   async getSolved() {

@@ -10,7 +10,7 @@ export class MchgGateway {
 
   joinRoom() {
     this.server.socketsJoin(Room.MCHG);
-    this.sendMessage('joined room');
+    this.server.emit('joinedRoom', Room.MCHG);
   }
 
   leaveRoom() {
@@ -45,10 +45,6 @@ export class MchgGateway {
     this.server.to(Room.MCHG).emit('updateRound', round);
   }
 
-  updateSolvedQuestions(questions: MchgQuestion[]) {
-    this.server.to(Room.MCHG).emit('updateSolvedQuestions', questions);
-  }
-
   pauseGame() {
     this.server.to(Room.MCHG).emit('pauseGame');
   }
@@ -59,9 +55,5 @@ export class MchgGateway {
 
   broadcastQuestion(question: MchgQuestion) {
     this.server.to(Room.MCHG).emit('broadcastQuestion', question);
-  }
-
-  broadcastAnswers() {
-    this.server.to(Room.MCHG).emit('broadcastAnswers');
   }
 }

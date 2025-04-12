@@ -4,6 +4,7 @@ import { CreateRoundReqDto, GetCurrentRoundCurrentQuestionResDto } from '../dtos
 import { User } from '../schemas/user.schema';
 import { MchgQuestionRepository } from './mchg-question.repository';
 import { MchgGameService } from './mchg-game.service';
+import mongoose from 'mongoose';
 
 @Injectable()
 export class MchgService {
@@ -44,7 +45,7 @@ export class MchgService {
   }
 
   runGame() {
-    this.gameService.runGame();
+    void this.gameService.runGame();
   }
 
   submitAnswer(answer: string, user: User) {
@@ -57,7 +58,8 @@ export class MchgService {
 
   async getCurrentRoundCurrentQuestion(): Promise<GetCurrentRoundCurrentQuestionResDto> {
     const currentRound = await this.getCurrentRound();
-    const currentQuestion = await this.questionRepository.findById(currentRound.currentQuestion!);
+    const currentQuestion = (await this.questionRepository.findById(currentRound.currentQuestion!))!.toObject();
+
     if (!currentQuestion) {
       throw new BadRequestException('No currently running question');
     }
@@ -85,7 +87,12 @@ export class MchgService {
     await this.gameService.acceptCurrentUserMainQuestionAnswer();
   }
 
-  getCurrentQuestionAnswer(teamUsername: string) {
-    return this.gameService.getCurrentQuestionAnswer(teamUsername);
+  async getCurrentRequestUser() {
+    const queueItem = await this.gameService.getCurrentRequestUser();
+    return { username: queueItem.user.username };
+  }
+
+  getCurrentQuestionAnswer(userId: mongoose.Types.ObjectId) {
+    return this.gameService.getCurrentQuestionAnswer(userId);
   }
 }

@@ -9,17 +9,20 @@ import { User } from '../schemas/user.schema';
 import { MchgAnswerQueueService } from './mchg-answer-queue.service';
 import { UserRepository } from '../user/user.repository';
 import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
+import mongoose from 'mongoose';
 
 const MAIN_ANSWER_POINTS = 150;
 const SUB_ANSWER_POINTS = 15;
 const ROUND_COUNT = 3;
 const SHOWING_ANSWER_DELAY_DURATION = 10;
-const SHOWING_ROUND_RESULT_DURATION = 15;
-const ROUND_DELAY_DURATION = 5;
 const ANSWERING_SUB_QUESTION_DURATION = 30;
 
 @Injectable()
 export class MchgGameService {
+  private roundIndex: number = 0;
+  private roundStage: MchgStage = MchgStage.CHOOSING_QUESTION;
+  private gameState = MchgGameState.NOT_RUNNING;
+
   constructor(
     private readonly timerService: MchgTimerService,
     private readonly gateway: MchgGateway,
@@ -30,16 +33,13 @@ export class MchgGameService {
     private readonly userRepository: UserRepository,
   ) {}
 
-  private roundIndex: number = 0;
-  private roundStage: MchgStage = MchgStage.CHOOSING_QUESTION;
-  private gameState = MchgGameState.NOT_RUNNING;
-
   async reset() {
     this.roundIndex = 0;
     this.roundStage = MchgStage.CHOOSING_QUESTION;
     this.gameState = MchgGameState.NOT_RUNNING;
     await this.questionRepository.reset();
     await this.answerQueueService.clear();
+    await this.submissionRepository.deleteAll();
   }
 
   async runGame() {
@@ -63,91 +63,7 @@ export class MchgGameService {
     this.gateway.resumeGame();
 
     void this.runRound();
-    this.timerService.resume();
-  }
-
-  private async runRound() {
-    if (this.roundIndex >= ROUND_COUNT) {
-      this.gameState = MchgGameState.NOT_RUNNING;
-      this.gateway.endGame();
-      return;
-    }
-
-    switch (this.roundStage) {
-      case MchgStage.CHOOSING_QUESTION:
-        await this.choosingQuestionPhase();
-        break;
-
-      case MchgStage.ANSWERING_MAIN_QUESTION:
-        await this.answeringMainAnswerPhase();
-        break;
-
-      case MchgStage.ANSWERING_SUB_QUESTION:
-        await this.answeringSubQuestionPhase();
-        break;
-
-      case MchgStage.SHOWING_SUB_QUESTION_ANSWER:
-        await this.showingSubQuestionAnswerPhase();
-        break;
-
-      case MchgStage.SHOWING_ROUND_RESULT:
-        await this.showingRoundResultPhase();
-        break;
-    }
-  }
-
-  private async choosingQuestionPhase() {
-    this.gateway.updateStage(MchgStage.CHOOSING_QUESTION);
-
-    const currentRound = await this.roundRepository.getByOrder(this.roundIndex);
-    const availableQuestions = currentRound.questions.filter((question) => !question.selected);
-
-    if (availableQuestions.length === 0) {
-      this.roundStage = MchgStage.SHOWING_ROUND_RESULT;
-      await this.runRound();
-    }
-  }
-
-  private async answeringMainAnswerPhase() {
-    this.gateway.updateStage(MchgStage.ANSWERING_MAIN_QUESTION);
-
-    this.timerService.pause();
-
-    this.roundStage = MchgStage.ANSWERING_SUB_QUESTION;
-    await this.runRound();
-  }
-
-  private async answeringSubQuestionPhase() {
-    this.gateway.updateStage(MchgStage.ANSWERING_SUB_QUESTION);
-
-    await this.timerService.start(ANSWERING_SUB_QUESTION_DURATION, (rem) => this.gateway.updateTimer(rem));
-
-    this.roundStage = MchgStage.SHOWING_SUB_QUESTION_ANSWER;
-    await this.runRound();
-  }
-
-  private async showingSubQuestionAnswerPhase() {
-    this.gateway.updateStage(MchgStage.SHOWING_SUB_QUESTION_ANSWER);
-
-    await this.timerService.start(SHOWING_ANSWER_DELAY_DURATION, (rem) => this.gateway.updateTimer(rem));
-
-    this.roundStage = MchgStage.CHOOSING_QUESTION;
-    await this.runRound();
-  }
-
-  private async showingRoundResultPhase() {
-    await this.updateScores();
-
-    this.gateway.updateStage(MchgStage.SHOWING_ROUND_RESULT);
-
-    await this.timerService.start(SHOWING_ROUND_RESULT_DURATION, (rem) => this.gateway.updateTimer(rem));
-
-    this.roundIndex++;
-    this.roundStage = MchgStage.CHOOSING_QUESTION;
-
-    await this.timerService.start(ROUND_DELAY_DURATION, (rem) => this.gateway.updateTimer(rem));
-
-    await this.runRound();
+    void this.timerService.resume();
   }
 
   async getCurrentRound() {
@@ -156,18 +72,7 @@ export class MchgGameService {
     }
 
     const round = await this.roundRepository.getByOrder(this.roundIndex);
-    const roundPopulated = await round.populate(['questions', 'currentQuestion'] as const);
-    return roundPopulated.toObject();
-  }
-
-  private async getCurrentQuestion() {
-    const currentRound = await this.getCurrentRound();
-
-    if (!currentRound.currentQuestion) {
-      throw new BadRequestException('No current question');
-    }
-
-    return (await this.questionRepository.findById(currentRound.currentQuestion))!;
+    return (await round.populate(['questions', 'currentQuestion'] as const)).toObject();
   }
 
   async submitAnswer(answer: string, user: User) {
@@ -176,20 +81,27 @@ export class MchgGameService {
     if (question === null) throw new BadRequestException('No current question');
 
     const submission = {
-      question,
+      question: question._id,
+      user: user._id,
       answer,
-      user,
     };
 
     return this.submissionRepository.create(submission);
   }
 
   async requestAnswerMainQuestion(user: User) {
-    switch (this.roundStage) {
-      case MchgStage.ANSWERING_SUB_QUESTION:
-      case MchgStage.ANSWERING_MAIN_QUESTION:
-        await this.answerQueueService.enqueue(user);
+    if (this.roundStage === MchgStage.UPDATE_RESULTS) {
+      throw new BadRequestException('Cannot request main question answer at this time');
     }
+
+    await this.answerQueueService.enqueue(user);
+
+    if (this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) return;
+
+    const lastStage = this.roundStage;
+    this.roundStage = MchgStage.ANSWERING_MAIN_QUESTION;
+    await this.runRound();
+    this.roundStage = lastStage;
   }
 
   async nextWaitingUserMainQuestion() {
@@ -214,6 +126,10 @@ export class MchgGameService {
     void this.runRound();
   }
 
+  getCurrentRequestUser() {
+    return this.answerQueueService.top();
+  }
+
   async selectQuestion(index: number) {
     if (this.roundStage === MchgStage.ANSWERING_SUB_QUESTION || this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) {
       throw new BadRequestException('Question is already running');
@@ -235,6 +151,131 @@ export class MchgGameService {
     void this.runRound();
   }
 
+  async getCurrentQuestionAnswer(userId: mongoose.Types.ObjectId) {
+    const currentQuestion = await this.getCurrentQuestion();
+    const submission = await this.submissionRepository.findByUserIdAndQuestionId(userId, currentQuestion._id);
+
+    if (!submission) {
+      throw new NotFoundException(`Unable to find submission with user ${userId.toHexString()}`);
+    }
+
+    return {
+      ...submission,
+      isCorrect: this.isCorrect(submission),
+    };
+  }
+
+  private async runRound() {
+    if (this.roundIndex >= ROUND_COUNT) {
+      this.gameState = MchgGameState.NOT_RUNNING;
+      this.gateway.endGame();
+      this.gateway.leaveRoom();
+      return;
+    }
+
+    switch (this.roundStage) {
+      case MchgStage.CHOOSING_QUESTION:
+        await this.choosingQuestionPhase();
+        break;
+
+      case MchgStage.ANSWERING_MAIN_QUESTION:
+        this.answeringMainAnswerPhase();
+        break;
+
+      case MchgStage.ANSWERING_SUB_QUESTION:
+        await this.answeringSubQuestionPhase();
+        break;
+
+      case MchgStage.SHOWING_SUB_QUESTION_ANSWER:
+        await this.showingSubQuestionAnswerPhase();
+        break;
+
+      case MchgStage.UPDATE_RESULTS:
+        await this.updateResultsPhase();
+        break;
+    }
+  }
+
+  private async choosingQuestionPhase() {
+    this.gateway.updateStage(MchgStage.CHOOSING_QUESTION);
+
+    const currentRound = await this.roundRepository.getByOrder(this.roundIndex);
+    const availableQuestions = currentRound.questions.filter((question) => !question.selected);
+
+    if (availableQuestions.length === 0) {
+      this.roundStage = MchgStage.UPDATE_RESULTS;
+      await this.runRound();
+    }
+  }
+
+  private answeringMainAnswerPhase() {
+    this.gateway.updateStage(MchgStage.ANSWERING_MAIN_QUESTION);
+
+    this.timerService.pause();
+  }
+
+  private async answeringSubQuestionPhase() {
+    this.gateway.updateStage(MchgStage.ANSWERING_SUB_QUESTION);
+
+    if (this.timerService.isPaused()) {
+      await this.timerService.resume();
+    } else {
+      await this.timerService.start(ANSWERING_SUB_QUESTION_DURATION, (rem) => this.gateway.updateTimer(rem));
+    }
+
+    this.roundStage = MchgStage.SHOWING_SUB_QUESTION_ANSWER;
+    await this.runRound();
+  }
+
+  private async showingSubQuestionAnswerPhase() {
+    this.gateway.updateStage(MchgStage.SHOWING_SUB_QUESTION_ANSWER);
+
+    await this.markCurrentQuestionSolved();
+    await this.timerService.start(SHOWING_ANSWER_DELAY_DURATION, (rem) => this.gateway.updateTimer(rem));
+
+    this.roundStage = MchgStage.CHOOSING_QUESTION;
+    await this.runRound();
+  }
+
+  private async updateResultsPhase() {
+    await this.updateScores();
+
+    this.roundIndex++;
+    this.roundStage = MchgStage.CHOOSING_QUESTION;
+
+    this.gateway.updateRound(this.roundIndex);
+
+    await this.runRound();
+  }
+
+  private async markCurrentQuestionSolved() {
+    const currentRound = await this.getCurrentRound();
+
+    if (!currentRound.currentQuestion) {
+      throw new BadRequestException('No currently running question');
+    }
+
+    const currentQuestionSubmissions = await this.submissionRepository.getAllByQuestionId(
+      currentRound.currentQuestion._id,
+    );
+
+    const correctSubmissions = currentQuestionSubmissions.filter((submission) => this.isCorrect(submission.toObject()));
+
+    if (correctSubmissions.length > 0) {
+      await this.questionRepository.updateSolved(currentRound.currentQuestion, true);
+    }
+  }
+
+  private async getCurrentQuestion() {
+    const currentRound = await this.getCurrentRound();
+
+    if (!currentRound.currentQuestion) {
+      throw new BadRequestException('No current question');
+    }
+
+    return (await this.questionRepository.findById(currentRound.currentQuestion))!.toObject();
+  }
+
   private isCorrect(submission: MchgSubmission) {
     return submission.answer.trim().toLowerCase() === submission.question.answer.trim().toLowerCase();
   }
@@ -249,17 +290,5 @@ export class MchgGameService {
     }
 
     await this.submissionRepository.deleteAll();
-  }
-
-  async getCurrentQuestionAnswer(teamUsername: string) {
-    const submission = await this.submissionRepository.findByUsername(teamUsername);
-    if (!submission) {
-      throw new NotFoundException(`Unable to find submission with username ${teamUsername}`);
-    }
-
-    return {
-      ...submission,
-      isCorrect: this.isCorrect(submission),
-    };
   }
 }

@@ -42,6 +42,6 @@ import { TgoGateway } from './tgo.gateway';
     TgoGameService,
     TgoTimerService,
   ],
-  exports: [],
+  exports: [TgoGateway],
 })
 export class TgoModule {}

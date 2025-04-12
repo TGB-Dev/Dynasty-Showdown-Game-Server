@@ -8,7 +8,7 @@ export class CdvqGateway {
 
   joinRoom() {
     this.server.socketsJoin(Room.CDVQ);
-    this.sendMessage('room joined');
+    this.server.emit('joinedRoom', Room.CDVQ);
   }
 
   leaveRoom() {
@@ -20,34 +20,34 @@ export class CdvqGateway {
   }
 
   emitTimerUpdate(remainingTime: number) {
-    this.server.emit('timerUpdate', remainingTime);
+    this.server.to(Room.CDVQ).emit('timerUpdate', remainingTime);
   }
 
   emitGameEnded() {
-    this.server.emit('gameEnded');
+    this.server.to(Room.CDVQ).emit('gameEnded');
   }
 
   emitGamePaused() {
-    this.server.emit('gamePaused');
+    this.server.to(Room.CDVQ).emit('gamePaused');
   }
 
   emitGameResumed() {
-    this.server.emit('gameResumed');
+    this.server.to(Room.CDVQ).emit('gameResumed');
   }
 
   emitQuestion() {
-    this.server.emit('question');
+    this.server.to(Room.CDVQ).emit('question');
   }
 
   emitAnswer() {
-    this.server.emit('answer');
+    this.server.to(Room.CDVQ).emit('answer');
   }
 
   emitResult() {
-    this.server.emit('result');
+    this.server.to(Room.CDVQ).emit('result');
   }
 
   emitReadyTimer(remainingTime: number) {
-    this.server.emit('readyTimer', remainingTime);
+    this.server.to(Room.CDVQ).emit('readyTimer', remainingTime);
   }
 }

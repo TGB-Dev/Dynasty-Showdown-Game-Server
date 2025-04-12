@@ -31,16 +31,16 @@ const SCORE_CRITERIA = [
 
 @Injectable()
 export class CdvqGameService {
+  private gameState = CdvqGameState.NOT_PLAYING;
+  private roundState = CdvqRoundState.WAITING;
+  private currentQuestion: CdvqQuestion | null;
+
   constructor(
     private readonly timerService: CdvqTimerService,
     private readonly questionRepository: CdvqQuestionRepository,
     private readonly submissionRepository: CdvqSubmissionRepository,
     private readonly gateway: CdvqGateway,
   ) {}
-
-  private gameState = CdvqGameState.NOT_PLAYING;
-  private roundState = CdvqRoundState.WAITING;
-  private currentQuestion: CdvqQuestion | null;
 
   async startGame() {
     if (this.gameState !== CdvqGameState.NOT_PLAYING) {
@@ -62,7 +62,8 @@ export class CdvqGameService {
     }
 
     this.endGame();
-    void this.timerService.stop();
+    this.gateway.leaveRoom();
+    this.timerService.stop();
   }
 
   pauseGame() {
@@ -98,6 +99,58 @@ export class CdvqGameService {
           break;
       }
     })();
+  }
+
+  getCurrentQuestion() {
+    return this.currentQuestion;
+  }
+
+  async answerCurrentQuestion(user: User, answer: string) {
+    if (this.gameState !== CdvqGameState.PLAYING) {
+      throw new BadRequestException('Game is not currently playing');
+    }
+
+    if (this.roundState !== CdvqRoundState.ANSWERING) {
+      throw new BadRequestException('Round is not currently answering');
+    }
+
+    if (!this.currentQuestion) {
+      throw new BadRequestException('No current question available');
+    }
+
+    if (await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion._id!))
+      throw new BadRequestException('User has already submitted an answer');
+
+    const submission = {
+      user,
+      question: this.currentQuestion._id,
+      answer,
+    };
+
+    return this.submissionRepository.create(submission);
+  }
+
+  getRoundResults() {
+    if (this.roundState !== CdvqRoundState.SHOWING_RESULT) {
+      throw new BadRequestException('Round is not currently showing result');
+    }
+
+    return this.submissionRepository.getAll();
+  }
+
+  async getCurrentQuestionAnswer(user: User) {
+    if (this.roundState !== CdvqRoundState.SHOWING_ANSWER) {
+      throw new BadRequestException('Game is not currently showing answer');
+    }
+
+    const submission = (
+      await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion!._id!)
+    )?.toObject();
+
+    return {
+      answer: this.currentQuestion!.answer,
+      correct: !submission ? false : submission.isCorrect,
+    };
   }
 
   private async startRound() {
@@ -178,57 +231,5 @@ export class CdvqGameService {
       questions.map((question) => this.questionRepository.updateStatus(question, CdvqQuestionStatus.WAITING)),
     );
     await this.submissionRepository.deleteAll();
-  }
-
-  getCurrentQuestion() {
-    return this.currentQuestion;
-  }
-
-  async answerCurrentQuestion(user: User, answer: string) {
-    if (this.gameState !== CdvqGameState.PLAYING) {
-      throw new BadRequestException('Game is not currently playing');
-    }
-
-    if (this.roundState !== CdvqRoundState.ANSWERING) {
-      throw new BadRequestException('Round is not currently answering');
-    }
-
-    if (!this.currentQuestion) {
-      throw new BadRequestException('No current question available');
-    }
-
-    if (await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion._id!))
-      throw new BadRequestException('User has already submitted an answer');
-
-    const submission = {
-      user,
-      question: this.currentQuestion._id,
-      answer,
-    };
-
-    return this.submissionRepository.create(submission);
-  }
-
-  getRoundResults() {
-    if (this.roundState !== CdvqRoundState.SHOWING_RESULT) {
-      throw new BadRequestException('Round is not currently showing result');
-    }
-
-    return this.submissionRepository.getAll();
-  }
-
-  async getCurrentQuestionAnswer(user: User) {
-    if (this.roundState !== CdvqRoundState.SHOWING_ANSWER) {
-      throw new BadRequestException('Game is not currently showing answer');
-    }
-
-    const submission = (
-      await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion!._id!)
-    )?.toObject();
-
-    return {
-      answer: this.currentQuestion!.answer,
-      correct: !submission ? false : submission.isCorrect,
-    };
   }
 }

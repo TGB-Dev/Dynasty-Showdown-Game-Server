@@ -3,9 +3,10 @@ import { AdminController } from './admin.controller';
 import { UserModule } from '../user/user.module';
 import { CdvqModule } from '../cdvq/cdvq.module';
 import { MchgModule } from '../mchg/mchg.module';
+import { TgoModule } from '../tgo/tgo.module';
 
 @Module({
-  imports: [UserModule, CdvqModule, MchgModule],
+  imports: [UserModule, CdvqModule, MchgModule, TgoModule],
   controllers: [AdminController],
   providers: [],
   exports: [],

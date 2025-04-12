@@ -4,7 +4,8 @@ export type CallbackFn = (timeLeft: number) => void;
 
 @Injectable()
 export class MchgTimerService {
-  private isRunning = false;
+  private running = false;
+  private paused = false;
   private remainingTime = 0;
   private interval: NodeJS.Timeout | null;
   private callbackFn: CallbackFn;
@@ -15,16 +16,18 @@ export class MchgTimerService {
       this.interval = null;
     }
 
-    this.isRunning = false;
+    this.running = false;
+    this.paused = false;
   }
 
   start(duration: number, callbackFn: CallbackFn) {
-    if (this.isRunning) {
+    if (this.running) {
       return;
     }
 
     this.remainingTime = duration;
-    this.isRunning = true;
+    this.running = true;
+    this.paused = false;
     this.callbackFn = callbackFn;
 
     return this.tick();
@@ -34,16 +37,22 @@ export class MchgTimerService {
     if (this.interval) {
       clearInterval(this.interval);
       this.interval = null;
+      this.paused = true;
     }
   }
 
   resume() {
-    if (this.isRunning) {
+    if (!this.paused) {
       return;
     }
 
-    this.isRunning = true;
+    this.running = true;
+    this.paused = false;
     return this.tick();
+  }
+
+  isPaused(): boolean {
+    return this.paused;
   }
 
   private tick() {
