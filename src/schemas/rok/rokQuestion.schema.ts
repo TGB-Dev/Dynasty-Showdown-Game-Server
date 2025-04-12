@@ -12,6 +12,7 @@ export class RokQuestion extends BaseModel {
   @Prop({ required: true })
   question: string;
 
+  @ApiProperty()
   @Prop({ required: true, default: false })
   isMultiple: boolean;
 
