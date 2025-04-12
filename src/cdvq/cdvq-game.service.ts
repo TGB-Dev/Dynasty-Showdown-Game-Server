@@ -162,6 +162,7 @@ export class CdvqGameService {
       return;
     }
 
+    await this.submissionRepository.deleteAll();
     await this.showQuestionPhase();
     await this.showAnswerPhase();
     await this.showResultPhase();
@@ -231,6 +232,57 @@ export class CdvqGameService {
     await Promise.all(
       questions.map((question) => this.questionRepository.updateStatus(question, CdvqQuestionStatus.WAITING)),
     );
-    await this.submissionRepository.deleteAll();
+  }
+
+  getCurrentQuestion() {
+    return this.currentQuestion;
+  }
+
+  async answerCurrentQuestion(user: User, answer: string) {
+    if (this.gameState !== CdvqGameState.PLAYING) {
+      throw new BadRequestException('Game is not currently playing');
+    }
+
+    if (this.roundState !== CdvqRoundState.ANSWERING) {
+      throw new BadRequestException('Round is not currently answering');
+    }
+
+    if (!this.currentQuestion) {
+      throw new BadRequestException('No current question available');
+    }
+
+    if (await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion._id!))
+      throw new BadRequestException('User has already submitted an answer');
+
+    const submission = {
+      user,
+      question: this.currentQuestion._id,
+      answer,
+    };
+
+    return this.submissionRepository.create(submission);
+  }
+
+  async getRoundResults() {
+    if (this.roundState !== CdvqRoundState.SHOWING_RESULT) {
+      throw new BadRequestException('Round is not currently showing result');
+    }
+
+    return (await this.submissionRepository.getAll()).map((sub) => sub.toObject());
+  }
+
+  async getCurrentQuestionAnswer(user: User) {
+    if (this.roundState !== CdvqRoundState.SHOWING_ANSWER) {
+      throw new BadRequestException('Game is not currently showing answer');
+    }
+
+    const submission = (
+      await this.submissionRepository.getByUserIdAndQuestionId(user._id!, this.currentQuestion!._id!)
+    )?.toObject();
+
+    return {
+      answer: this.currentQuestion!.answer,
+      correct: !submission ? false : submission.isCorrect,
+    };
   }
 }

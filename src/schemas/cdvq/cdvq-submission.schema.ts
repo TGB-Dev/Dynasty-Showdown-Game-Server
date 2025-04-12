@@ -20,6 +20,8 @@ export class CdvqSubmission extends BaseModel {
 
   @Prop({ required: true, default: 0 })
   score: number;
+
+  createdAt: Date;
 }
 
 export const CdvqSubmissionSchema = SchemaFactory.createForClass(CdvqSubmission);

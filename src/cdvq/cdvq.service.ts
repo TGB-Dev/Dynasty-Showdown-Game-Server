@@ -52,8 +52,12 @@ export class CdvqService {
     return this.gameService.answerCurrentQuestion(user, answer);
   }
 
-  getRoundResults() {
-    return this.gameService.getRoundResults();
+  async getRoundResults() {
+    return (await this.gameService.getRoundResults()).map((result) => ({
+      username: result.user.username,
+      score: result.score,
+      createdAt: result.createdAt,
+    }));
   }
 
   getCurrentQuestionAnswer(user: User) {
