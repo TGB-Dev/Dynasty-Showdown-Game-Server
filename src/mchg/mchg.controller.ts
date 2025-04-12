@@ -8,12 +8,9 @@ import {
   Req,
   SerializeOptions,
   StreamableFile,
-  UploadedFile,
   UseGuards,
   UseInterceptors,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { MchgImageValidationPipe } from './mchg.pipe';
 import {
   CreateRoundReqDto,
   CreateRoundResDto,
@@ -24,12 +21,10 @@ import {
   SubmitAnswerReqDto,
 } from '../dtos/mchg.dto';
 import { MchgService } from './mchg.service';
-import { diskStorage } from 'multer';
 import { globalConfigs } from '../common/constants/global-config.constant';
 import {
   ApiBadRequestResponse,
   ApiBearerAuth,
-  ApiConsumes,
   ApiCreatedResponse,
   ApiOkResponse,
   ApiOperation,
@@ -41,7 +36,7 @@ import { UserRole } from '../common/enum/roles.enum';
 import { AuthRequest } from '../common/interfaces/request.interface';
 import { RoleBasedClassSerializer } from '../common/interceptors/role-based-class-serializer';
 import { MchgQuestion } from '../schemas/mchg/mchgQuestion.schema';
-import { createReadStream } from 'fs';
+import { createReadStream, writeFileSync } from 'fs';
 import { join } from 'path';
 import mime from 'mime-types';
 
@@ -80,27 +75,21 @@ export class MchgController {
 
   @Post('rounds')
   @ApiOperation({ summary: 'Create a compete round' })
-  @ApiConsumes('multipart/form-data')
   @ApiCreatedResponse({ type: CreateRoundResDto })
   @ApiBadRequestResponse({ description: 'Bad request' })
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   @UseGuards(AuthGuard(UserRole.ADMIN))
-  @UseInterceptors(
-    FileInterceptor('image', {
-      storage: diskStorage({
-        destination: globalConfigs.assetsRoot,
-        filename: (req, file, cb) => {
-          const filename = `${Date.now()}.${file.mimetype.split('/')[1]}`;
-          cb(null, filename);
-        },
-      }),
-    }),
-  )
-  createRound(
-    @UploadedFile(new MchgImageValidationPipe()) image: Express.Multer.File,
-    @Body() body: CreateRoundReqDto,
-  ): Promise<CreateRoundResDto> {
-    return this.mchgService.createRound({ ...body, image });
+  createRound(@Body() body: CreateRoundReqDto): Promise<CreateRoundResDto> {
+    const imageName = `${Date.now()}.png`;
+    const buffer = Buffer.from(body.image, 'base64');
+    writeFileSync(join(globalConfigs.assetsRoot, imageName), buffer);
+
+    return this.mchgService.createRound({
+      image: imageName,
+      answer: body.answer,
+      questions: body.questions,
+      order: body.order,
+    });
   }
 
   @Get('image')

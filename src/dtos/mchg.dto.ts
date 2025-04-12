@@ -4,7 +4,9 @@ import { MchgSubmission } from '../schemas/mchg/mchgSubmission.schema';
 import { Expose, Type } from 'class-transformer';
 import { UserRole } from '../common/enum/roles.enum';
 
-export class CreateRoundReqDto extends PickType(MchgRound, ['order', 'questions', 'image', 'answer'] as const) {}
+export class CreateRoundReqDto extends PickType(MchgRound, ['order', 'questions', 'answer'] as const) {
+  image: string;
+}
 
 export class CreateRoundResDto extends MchgRound {}
 

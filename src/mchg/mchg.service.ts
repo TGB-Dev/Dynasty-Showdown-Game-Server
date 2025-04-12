@@ -22,14 +22,14 @@ export class MchgService {
     this.gameService.resumeGame();
   }
 
-  async createRound(roundDto: Omit<CreateRoundReqDto, 'image'> & { image: Express.Multer.File }) {
+  async createRound(roundDto: Omit<CreateRoundReqDto, 'image'> & { image: string }) {
     const image = roundDto.image;
 
     const round = {
       ...roundDto,
       questions: await this.questionRepository.createMany(roundDto.questions),
       image: {
-        name: image.filename,
+        name: image,
       },
     };
 
