@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { BaseModel } from '../base.schema';
+import { CurrentQuestion } from '../../common/interfaces/tgo.interface';
 
 @Schema()
 export class TgoUserData extends BaseModel {
