@@ -121,15 +121,14 @@ export class RokService implements OnModuleDestroy {
   async answerQuestion(questionId: string, teamUsername: string, dto: RokAnswerQuestionDto) {
     const question = await this.rokRepository.getQuestionById(questionId);
     if (!question) {
-      throw new NotFoundException();
+      throw new NotFoundException('Question not found');
     }
 
-    if (!this.timerService.timerIsRunning()) {
-      return false;
-    }
-
-    if (this.currentStage !== RokStage.ATTACK && this.currentStage !== RokStage.DEFEND) {
-      return false;
+    if (
+      !this.timerService.timerIsRunning() ||
+      (this.currentStage !== RokStage.ATTACK && this.currentStage !== RokStage.DEFEND)
+    ) {
+      throw new BadRequestException('Question answering stage ended');
     }
 
     if (this.currentStage === RokStage.ATTACK) {
@@ -182,8 +181,8 @@ export class RokService implements OnModuleDestroy {
   }
 
   async selectCity(teamUsername: string, cityId: number) {
-    if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.ATTACK)) {
-      throw new BadRequestException('Attack stage ended.');
+    if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.CHOOSE_CITY)) {
+      throw new BadRequestException('City choosing stage ended.');
     }
 
     await this.rokRepository.selectCity(teamUsername, cityId);
@@ -191,8 +190,8 @@ export class RokService implements OnModuleDestroy {
   }
 
   async deselectCity(teamUsername: string, cityId: number) {
-    if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.ATTACK)) {
-      throw new BadRequestException('Attack stage ended.');
+    if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.CHOOSE_CITY)) {
+      throw new BadRequestException('City choosing stage ended.');
     }
 
     await this.rokRepository.deselectCity(teamUsername, cityId);
