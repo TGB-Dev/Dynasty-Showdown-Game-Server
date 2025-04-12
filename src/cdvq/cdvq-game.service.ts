@@ -11,8 +11,8 @@ import { CdvqSubmissionRepository } from './cdvq-submission.repository';
 
 const ROUND_DURATION = 30;
 const READY_DURATION = 3;
-const SHOW_ANSWER_DURATION = 10;
-const SHOW_RESULT_DURATION = 15;
+const SHOW_ANSWER_DURATION = 7;
+const SHOW_RESULT_DURATION = 7;
 
 const SCORE_CRITERIA = [
   {
@@ -209,12 +209,12 @@ export class CdvqGameService {
     return this.submissionRepository.create(submission);
   }
 
-  getRoundResults() {
+  async getRoundResults() {
     if (this.roundState !== CdvqRoundState.SHOWING_RESULT) {
       throw new BadRequestException('Round is not currently showing result');
     }
 
-    return this.submissionRepository.getAll();
+    return (await this.submissionRepository.getAll()).map((sub) => sub.toObject());
   }
 
   async getCurrentQuestionAnswer(user: User) {
