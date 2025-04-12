@@ -224,6 +224,10 @@ export class RokService implements OnModuleDestroy {
     return await this.rokRepository.getAttacks();
   }
 
+  getCurrentStage() {
+    return this.currentStage;
+  }
+
   onModuleDestroy() {
     this.timerService.stop();
   }

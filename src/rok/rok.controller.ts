@@ -123,4 +123,11 @@ export class RokController {
   async getMatrix() {
     return await this.rokService.getMatrix();
   }
+
+  @ApiOperation({ summary: 'Get current game stage.' })
+  @UseGuards(AuthGuard())
+  @Get('currentStage')
+  getCurrentStage() {
+    return this.rokService.getCurrentStage();
+  }
 }
