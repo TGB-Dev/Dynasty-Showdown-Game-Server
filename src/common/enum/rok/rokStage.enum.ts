@@ -1,0 +1,7 @@
+export const enum RokStage {
+  CHOOSE_CITY = 'CHOOSE_CITY',
+  ATTACK = 'ATTACK',
+  DEFEND = 'DEFEND',
+  UPDATE_RESULTS = 'UPDATE_RESULTS',
+  PAUSED = 'PAUSED',
+}
