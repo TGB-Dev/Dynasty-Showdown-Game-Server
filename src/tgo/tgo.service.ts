@@ -188,7 +188,8 @@ export class TgoService {
       throw new BadRequestException('You need to wait until attacking and showing phase begin');
 
     const allTgoUserData = await this.tgoUserDataRepository.findAll();
-    return allTgoUserData.filter((opponent) => opponent.username !== username);
+    const opponents = allTgoUserData.filter((opponent) => opponent.username !== username);
+    return opponents.map((opponent) => opponent.username);
   }
 
   async attackOpponent(username: string, opponentUsername: string) {

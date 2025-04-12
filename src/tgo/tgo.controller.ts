@@ -59,8 +59,10 @@ export class TgoController {
 
   @Get('/opponents')
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  getOpponents(@Request() { user }: AuthRequest) {
-    return this.tgoService.getOpponents(user.username);
+  async getOpponents(@Request() { user }: AuthRequest) {
+    return {
+      opponents: await this.tgoService.getOpponents(user.username),
+    };
   }
 
   @Post('/opponents/attack')
