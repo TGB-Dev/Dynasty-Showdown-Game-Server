@@ -91,7 +91,7 @@ export class TgoService {
     await this.tgoUserDataRepository.setCurrentRound(username, this.tgoGameService.getCurrentRound());
 
     return {
-      data: currentQuestions,
+      questions: currentQuestions,
     };
   }
 
