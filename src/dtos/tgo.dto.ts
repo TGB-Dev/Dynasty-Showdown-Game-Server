@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsNumber, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsMongoId, IsNotEmpty, IsNumber, IsString } from 'class-validator';
 import { TgoQuestionPack } from '../common/enum/tgo/tgo-question-pack.enum';
 
 export class QuestionDto {
@@ -21,14 +21,10 @@ export class GenerateQuestionsDto {
 
 export class SubmitAnswersDto {
   @ApiProperty({ required: true })
-  @IsString()
-  @IsNotEmpty()
-  questionId: string;
-
-  @ApiProperty({ required: true })
-  @IsNumber()
-  @IsNotEmpty()
-  answer: number;
+  @IsArray()
+  @IsNotEmpty({ each: true })
+  @IsMongoId({ each: true })
+  questionIds: string[];
 }
 
 export class AttackOpponentDto {

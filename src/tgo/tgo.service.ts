@@ -77,27 +77,21 @@ export class TgoService {
       ),
     );
 
-    const sortedAnswers: number[] = randomQuestions.map((question) => question.answer).sort((a, b) => a - b);
+    const currentQuestions: CurrentQuestion[] = randomQuestions.map((questions) => {
+      return {
+        questionId: questions._id!.toHexString(),
+        questionText: questions.questionText,
+      };
+    });
 
     // Set current questions
-    await this.tgoUserDataRepository.setCurrentQuestions(
-      username,
-      randomQuestions.map((question) => ({
-        id: question._id!.toHexString(),
-        questionText: question.questionText,
-      })),
-      sortedAnswers,
-    );
+    await this.tgoUserDataRepository.setCurrentQuestions(username, currentQuestions);
 
     // Set current round
     await this.tgoUserDataRepository.setCurrentRound(username, this.tgoGameService.getCurrentRound());
 
     return {
-      questions: randomQuestions.map((question) => ({
-        id: question._id!.toHexString(),
-        questionText: question.questionText,
-      })),
-      answers: sortedAnswers,
+      data: currentQuestions,
     };
   }
 
@@ -109,40 +103,35 @@ export class TgoService {
     return tgoUserData.currentQuestions;
   }
 
-  async submitAnswers(
-    username: string,
-    submissionPayload: {
-      questionId: string;
-      answer: number;
-    }[],
-  ) {
+  async submitAnswers(username: string, questionIds: string[]) {
     const lateSubmitted = this.tgoGameService.getRoundState() !== TgoRoundState.CHOOSING_AND_ANSWERING;
 
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
     const user = (await this.userRepository.findUserByUsername(username))!;
-    const currentQuestions = tgoUserData.toObject().currentQuestions.questions.map((question) => question.id);
+    const currentQuestions = tgoUserData.currentQuestions;
 
     let isCorrect = true;
-    for (const submission of submissionPayload) {
-      const questionId = submission.questionId;
-      const answer = submission.answer;
+    const answers = await Promise.all(
+      currentQuestions.map(async (question) => {
+        const questionObject = await this.tgoQuestionRepository.findById(question.questionId);
+        return questionObject!.answer;
+      }),
+    );
+    const correctAnswers = answers.sort((a, b) => a - b);
 
-      if (!currentQuestions.includes(questionId)) {
-        throw new BadRequestException('Invalid question ID');
-      }
+    const submissionAnswers = await Promise.all(
+      questionIds.map(async (questionId) => {
+        const questionObject = await this.tgoQuestionRepository.findById(questionId);
+        return questionObject!.answer;
+      }),
+    );
 
-      const question = (await this.tgoQuestionRepository.findById(questionId))!.toObject();
-
-      if (question.answer !== answer) {
-        isCorrect = false;
-        break;
-      }
-    }
+    if (correctAnswers !== submissionAnswers) isCorrect = false;
 
     if (lateSubmitted) isCorrect = false;
 
     if (isCorrect) {
-      switch (submissionPayload.length) {
+      switch (submissionAnswers.length) {
         case TgoQuestionPack.PACK_3.valueOf():
           user.score += TgoQuestionPackScore.PACK_3;
           tgoUserData.attackScore = TgoQuestionPackPunishedScore.PACK_3;
@@ -157,7 +146,7 @@ export class TgoService {
           break;
       }
     } else {
-      switch (submissionPayload.length) {
+      switch (submissionAnswers.length) {
         case TgoQuestionPack.PACK_3.valueOf():
           user.score += TgoQuestionPackPunishedScore.PACK_3;
           tgoUserData.attackScore = 0;
@@ -176,9 +165,16 @@ export class TgoService {
     await user.save();
     await tgoUserData.save();
 
+    const correctQuestionIdsOrder = await Promise.all(
+      correctAnswers.map(async (answer) => {
+        const question = await this.tgoQuestionRepository.findByAnswer(answer);
+        return question!._id.toHexString();
+      }),
+    );
+
     await this.tgoSubmissionRepository.create({
       username,
-      answers: submissionPayload,
+      answers: correctQuestionIdsOrder,
       correct: isCorrect,
     });
 

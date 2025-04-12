@@ -53,8 +53,8 @@ export class TgoController {
 
   @Post('/questions/submit')
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  submitAnswer(@Request() { user }: AuthRequest, @Body() submitAnswersDto: SubmitAnswersDto[]) {
-    return this.tgoService.submitAnswers(user.username, submitAnswersDto);
+  submitAnswer(@Request() { user }: AuthRequest, @Body() submitAnswersDto: SubmitAnswersDto) {
+    return this.tgoService.submitAnswers(user.username, submitAnswersDto.questionIds);
   }
 
   @Get('/opponents')
