@@ -25,7 +25,7 @@ export class UserRepository {
   }
 
   async findAll() {
-    return await this.userModel.find({}).exec();
+    return await this.userModel.find({}).sort({ score: -1 }).exec();
   }
 
   increaseScore(user_id: User | mongoose.Types.ObjectId | string, score: number) {

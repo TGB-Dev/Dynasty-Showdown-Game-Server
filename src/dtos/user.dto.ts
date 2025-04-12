@@ -25,3 +25,13 @@ export class UpdateUserScoreReqDto {
   @IsNumber()
   score: number;
 }
+
+export class LeaderboardDto {
+  @ApiProperty()
+  @Expose()
+  username: string;
+
+  @ApiProperty()
+  @Expose()
+  score: number;
+}

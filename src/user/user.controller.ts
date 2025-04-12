@@ -12,7 +12,7 @@ import {
 import { UserService } from './user.service';
 import { AuthGuard } from '../guards/auth.guard';
 import { AuthRequest } from '../common/interfaces/request.interface';
-import { GetMeResDto, UpdateUserScoreReqDto } from '../dtos/user.dto';
+import { GetMeResDto, LeaderboardDto, UpdateUserScoreReqDto } from '../dtos/user.dto';
 import { UserRole } from '../common/enum/roles.enum';
 import { ApiBadRequestResponse, ApiBearerAuth, ApiCreatedResponse, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { User } from '../schemas/user.schema';
@@ -40,5 +40,16 @@ export class UserController {
   @UseGuards(AuthGuard(UserRole.ADMIN))
   updateUserScore(@Body() body: UpdateUserScoreReqDto) {
     return this.userService.updateScore(body.user_id, body.action, body.score);
+  }
+
+  @Get('all')
+  @UseGuards(AuthGuard(UserRole.ADMIN, UserRole.PLAYER))
+  @UseInterceptors(ClassSerializerInterceptor)
+  @SerializeOptions({
+    type: LeaderboardDto,
+    excludeExtraneousValues: true,
+  })
+  getLeaderBoard() {
+    return this.userService.getLeaderBoard();
   }
 }

@@ -18,4 +18,10 @@ export class UserService {
     if (result === null) throw new NotFoundException();
     return result;
   }
+
+  async getLeaderBoard() {
+    const users = (await this.userRepository.findAll()).map((user) => user.toObject());
+    if (users.length === 0) throw new NotFoundException('No users found');
+    return users;
+  }
 }
