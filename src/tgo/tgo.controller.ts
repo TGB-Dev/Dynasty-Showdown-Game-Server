@@ -15,8 +15,14 @@ export class TgoController {
     return this.tgoService.getAllQuestions();
   }
 
+  @Get('/questions/current')
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  getCurrentQuestion(@Request() { user }: AuthRequest) {
+    return this.tgoService.getCurrentQuestions(user.username);
+  }
+
   @Get('/questions/:id')
-  @UseGuards(AuthGuard(UserRole.ADMIN, UserRole.PLAYER))
+  @UseGuards(AuthGuard(UserRole.ADMIN))
   getQuestionById(@Param('id') id: string) {
     return this.tgoService.getQuestionById(id);
   }
@@ -49,12 +55,6 @@ export class TgoController {
   @UseGuards(AuthGuard(UserRole.PLAYER))
   submitAnswer(@Request() { user }: AuthRequest, @Body() submitAnswersDto: SubmitAnswersDto[]) {
     return this.tgoService.submitAnswers(user.username, submitAnswersDto);
-  }
-
-  @Get('/questions/current')
-  @UseGuards(AuthGuard(UserRole.PLAYER))
-  getCurrentQuestion(@Request() { user }: AuthRequest) {
-    return this.tgoService.getCurrentQuestions(user.username);
   }
 
   @Get('/opponents')

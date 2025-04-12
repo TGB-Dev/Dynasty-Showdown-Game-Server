@@ -121,4 +121,8 @@ export class TgoGameService {
     this.gameState = TgoGameState.NOT_PLAYING;
     this.roundState = TgoRoundState.WAITING;
   }
+
+  getRoundState() {
+    return this.roundState;
+  }
 }

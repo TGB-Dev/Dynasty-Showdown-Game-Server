@@ -9,6 +9,7 @@ import { TgoQuestionPack } from '../common/enum/tgo/tgo-question-pack.enum';
 import { TgoQuestionPackScore } from '../common/enum/tgo/tgo-question-pack-score.enum';
 import { TgoQuestionPackPunishedScore } from '../common/enum/tgo/tgo-question-pack-punished-score.enum';
 import { TgoGameService } from './tgo-game.service';
+import { TgoRoundState } from '../common/enum/tgo/tgo-round-state.enum';
 
 @Injectable()
 export class TgoService {
@@ -41,6 +42,9 @@ export class TgoService {
   }
 
   async generateQuestions(pack: number, username: string) {
+    if (this.tgoGameService.getRoundState() !== TgoRoundState.CHOOSING_AND_ANSWERING)
+      throw new BadRequestException('You need to wait until choosing and answering phase begin');
+
     const questions = await this.tgoQuestionRepository.findAll();
     let tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))?.toObject();
 
@@ -94,6 +98,9 @@ export class TgoService {
   }
 
   async getCurrentQuestions(username: string) {
+    if (this.tgoGameService.getRoundState() !== TgoRoundState.CHOOSING_AND_ANSWERING)
+      throw new BadRequestException('You need to wait until choosing and answering phase begin');
+
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!.toObject();
     return tgoUserData.currentQuestions;
   }
@@ -105,6 +112,9 @@ export class TgoService {
       answer: number;
     }[],
   ) {
+    if (this.tgoGameService.getRoundState() !== TgoRoundState.CHOOSING_AND_ANSWERING)
+      throw new BadRequestException('You need to wait until choosing and answering phase begin');
+
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
     const user = (await this.userRepository.findUserByUsername(username))!;
     const currentQuestions = tgoUserData.toObject().currentQuestions.questions.map((question) => question.id);
@@ -173,11 +183,17 @@ export class TgoService {
   }
 
   async getOpponents(username: string) {
+    if (this.tgoGameService.getRoundState() !== TgoRoundState.ATTACKING_AND_SHOWING_RESULT)
+      throw new BadRequestException('You need to wait until attacking and showing phase begin');
+
     const allTgoUserData = await this.tgoUserDataRepository.findAll();
     return allTgoUserData.filter((opponent) => opponent.username !== username);
   }
 
   async attackOpponent(username: string, opponentUsername: string) {
+    if (this.tgoGameService.getRoundState() !== TgoRoundState.ATTACKING_AND_SHOWING_RESULT)
+      throw new BadRequestException('You need to wait until attacking and showing phase begin');
+
     const tgoUserData = (await this.tgoUserDataRepository.findByUsername(username))!;
     const opponentUser = await this.userRepository.findUserByUsername(opponentUsername);
 
