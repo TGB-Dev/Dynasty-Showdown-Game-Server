@@ -41,8 +41,8 @@ export class TgoGameService {
       throw new BadRequestException('Game not started');
     }
 
-    this.gateway.emitGameEnded();
     this.endGame();
+    this.gateway.leaveRoom();
     this.timerService.stop();
   }
 
@@ -120,6 +120,7 @@ export class TgoGameService {
   endGame() {
     this.gameState = TgoGameState.NOT_PLAYING;
     this.roundState = TgoRoundState.WAITING;
+    this.gateway.emitGameEnded();
   }
 
   getRoundState() {

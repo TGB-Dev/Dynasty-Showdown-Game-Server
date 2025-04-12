@@ -19,6 +19,10 @@ const ANSWERING_SUB_QUESTION_DURATION = 30;
 
 @Injectable()
 export class MchgGameService {
+  private roundIndex: number = 0;
+  private roundStage: MchgStage = MchgStage.CHOOSING_QUESTION;
+  private gameState = MchgGameState.NOT_RUNNING;
+
   constructor(
     private readonly timerService: MchgTimerService,
     private readonly gateway: MchgGateway,
@@ -28,10 +32,6 @@ export class MchgGameService {
     private readonly answerQueueService: MchgAnswerQueueService,
     private readonly userRepository: UserRepository,
   ) {}
-
-  private roundIndex: number = 0;
-  private roundStage: MchgStage = MchgStage.CHOOSING_QUESTION;
-  private gameState = MchgGameState.NOT_RUNNING;
 
   async reset() {
     this.roundIndex = 0;
@@ -66,10 +66,110 @@ export class MchgGameService {
     void this.timerService.resume();
   }
 
+  async getCurrentRound() {
+    if (this.gameState === MchgGameState.NOT_RUNNING) {
+      throw new BadRequestException('Game is not running');
+    }
+
+    const round = await this.roundRepository.getByOrder(this.roundIndex);
+    return (await round.populate(['questions', 'currentQuestion'] as const)).toObject();
+  }
+
+  async submitAnswer(answer: string, user: User) {
+    const question = await this.getCurrentQuestion();
+
+    if (question === null) throw new BadRequestException('No current question');
+
+    const submission = {
+      question: question._id,
+      user: user._id,
+      answer,
+    };
+
+    return this.submissionRepository.create(submission);
+  }
+
+  async requestAnswerMainQuestion(user: User) {
+    if (this.roundStage === MchgStage.UPDATE_RESULTS) {
+      throw new BadRequestException('Cannot request main question answer at this time');
+    }
+
+    await this.answerQueueService.enqueue(user);
+
+    if (this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) return;
+
+    const lastStage = this.roundStage;
+    this.roundStage = MchgStage.ANSWERING_MAIN_QUESTION;
+    await this.runRound();
+    this.roundStage = lastStage;
+  }
+
+  async nextWaitingUserMainQuestion() {
+    await this.answerQueueService.dequeue();
+
+    if ((await this.answerQueueService.length()) === 0) {
+      void this.runRound();
+    }
+  }
+
+  async acceptCurrentUserMainQuestionAnswer() {
+    const queueItem = await this.answerQueueService.top();
+
+    if (!queueItem) {
+      throw new BadRequestException('No user in queue');
+    }
+
+    const user = queueItem.user;
+    await this.userRepository.increaseScore(user._id!, MAIN_ANSWER_POINTS);
+    await this.answerQueueService.clear();
+
+    void this.runRound();
+  }
+
+  getCurrentRequestUser() {
+    return this.answerQueueService.top();
+  }
+
+  async selectQuestion(index: number) {
+    if (this.roundStage === MchgStage.ANSWERING_SUB_QUESTION || this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) {
+      throw new BadRequestException('Question is already running');
+    }
+
+    const currentRound = await this.getCurrentRound();
+    const question = currentRound.questions[index];
+
+    if (question.selected) throw new BadRequestException('Question already selected');
+
+    await this.questionRepository.updateSelected(question._id, true);
+
+    currentRound.currentQuestion = question._id;
+    await this.roundRepository.update(currentRound._id, currentRound);
+
+    this.gateway.broadcastQuestion(question);
+    this.roundStage = MchgStage.ANSWERING_SUB_QUESTION;
+
+    void this.runRound();
+  }
+
+  async getCurrentQuestionAnswer(userId: mongoose.Types.ObjectId) {
+    const currentQuestion = await this.getCurrentQuestion();
+    const submission = await this.submissionRepository.findByUserIdAndQuestionId(userId, currentQuestion._id);
+
+    if (!submission) {
+      throw new NotFoundException(`Unable to find submission with user ${userId.toHexString()}`);
+    }
+
+    return {
+      ...submission,
+      isCorrect: this.isCorrect(submission),
+    };
+  }
+
   private async runRound() {
     if (this.roundIndex >= ROUND_COUNT) {
       this.gameState = MchgGameState.NOT_RUNNING;
       this.gateway.endGame();
+      this.gateway.leaveRoom();
       return;
     }
 
@@ -166,15 +266,6 @@ export class MchgGameService {
     }
   }
 
-  async getCurrentRound() {
-    if (this.gameState === MchgGameState.NOT_RUNNING) {
-      throw new BadRequestException('Game is not running');
-    }
-
-    const round = await this.roundRepository.getByOrder(this.roundIndex);
-    return (await round.populate(['questions', 'currentQuestion'] as const)).toObject();
-  }
-
   private async getCurrentQuestion() {
     const currentRound = await this.getCurrentRound();
 
@@ -183,82 +274,6 @@ export class MchgGameService {
     }
 
     return (await this.questionRepository.findById(currentRound.currentQuestion))!.toObject();
-  }
-
-  async submitAnswer(answer: string, user: User) {
-    const question = await this.getCurrentQuestion();
-
-    if (question === null) throw new BadRequestException('No current question');
-
-    const submission = {
-      question: question._id,
-      user: user._id,
-      answer,
-    };
-
-    return this.submissionRepository.create(submission);
-  }
-
-  async requestAnswerMainQuestion(user: User) {
-    if (this.roundStage === MchgStage.UPDATE_RESULTS) {
-      throw new BadRequestException('Cannot request main question answer at this time');
-    }
-
-    await this.answerQueueService.enqueue(user);
-
-    if (this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) return;
-
-    const lastStage = this.roundStage;
-    this.roundStage = MchgStage.ANSWERING_MAIN_QUESTION;
-    await this.runRound();
-    this.roundStage = lastStage;
-  }
-
-  async nextWaitingUserMainQuestion() {
-    await this.answerQueueService.dequeue();
-
-    if ((await this.answerQueueService.length()) === 0) {
-      void this.runRound();
-    }
-  }
-
-  async acceptCurrentUserMainQuestionAnswer() {
-    const queueItem = await this.answerQueueService.top();
-
-    if (!queueItem) {
-      throw new BadRequestException('No user in queue');
-    }
-
-    const user = queueItem.user;
-    await this.userRepository.increaseScore(user._id!, MAIN_ANSWER_POINTS);
-    await this.answerQueueService.clear();
-
-    void this.runRound();
-  }
-
-  getCurrentRequestUser() {
-    return this.answerQueueService.top();
-  }
-
-  async selectQuestion(index: number) {
-    if (this.roundStage === MchgStage.ANSWERING_SUB_QUESTION || this.roundStage === MchgStage.ANSWERING_MAIN_QUESTION) {
-      throw new BadRequestException('Question is already running');
-    }
-
-    const currentRound = await this.getCurrentRound();
-    const question = currentRound.questions[index];
-
-    if (question.selected) throw new BadRequestException('Question already selected');
-
-    await this.questionRepository.updateSelected(question._id, true);
-
-    currentRound.currentQuestion = question._id;
-    await this.roundRepository.update(currentRound._id, currentRound);
-
-    this.gateway.broadcastQuestion(question);
-    this.roundStage = MchgStage.ANSWERING_SUB_QUESTION;
-
-    void this.runRound();
   }
 
   private isCorrect(submission: MchgSubmission) {
@@ -275,19 +290,5 @@ export class MchgGameService {
     }
 
     await this.submissionRepository.deleteAll();
-  }
-
-  async getCurrentQuestionAnswer(userId: mongoose.Types.ObjectId) {
-    const currentQuestion = await this.getCurrentQuestion();
-    const submission = await this.submissionRepository.findByUserIdAndQuestionId(userId, currentQuestion._id);
-
-    if (!submission) {
-      throw new NotFoundException(`Unable to find submission with user ${userId.toHexString()}`);
-    }
-
-    return {
-      ...submission,
-      isCorrect: this.isCorrect(submission),
-    };
   }
 }

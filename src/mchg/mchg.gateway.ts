@@ -10,7 +10,7 @@ export class MchgGateway {
 
   joinRoom() {
     this.server.socketsJoin(Room.MCHG);
-    this.sendMessage('joined room');
+    this.server.emit('joinedRoom', Room.MCHG);
   }
 
   leaveRoom() {
