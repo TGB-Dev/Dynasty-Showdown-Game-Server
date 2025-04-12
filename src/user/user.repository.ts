@@ -7,7 +7,7 @@ import mongoose, { Model } from 'mongoose';
 export class UserRepository {
   constructor(@InjectModel(User.name) private readonly userModel: Model<User>) {}
 
-  async findUserByUsername(username: string): Promise<User | null> {
+  async findUserByUsername(username: string) {
     return await this.userModel
       .findOne({
         username: username,
@@ -15,7 +15,7 @@ export class UserRepository {
       .exec();
   }
 
-  async createNewUser(username: string, password: string, teamName: string): Promise<User> {
+  async createNewUser(username: string, password: string, teamName: string) {
     const newUser = new this.userModel({
       username: username,
       password: password,

@@ -1,0 +1,5 @@
+export enum TgoRoundState {
+  WAITING,
+  CHOOSING_AND_ANSWERING,
+  ATTACKING_AND_SHOWING_RESULT,
+}
