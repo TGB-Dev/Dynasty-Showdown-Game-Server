@@ -1,7 +1,7 @@
-import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { RokAttack } from '../schemas/rok/rokAttack.schema';
-import { Model } from 'mongoose';
+import { Model, ObjectId } from 'mongoose';
 import { RokMatrixState } from '../schemas/rok/rokMatrixState.schema';
 import { RokQuestion } from '../schemas/rok/rokQuestion.schema';
 import { NewRokQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
@@ -15,6 +15,8 @@ export class RokRepository {
     @InjectModel(RokQuestion.name) private readonly rokQuestionModel: Model<RokQuestion>,
     private readonly userRepository: UserRepository,
   ) {}
+
+  private currentQuestionId: ObjectId | null = null;
 
   private readonly bfsDirections = [-1, +1, -9, +9];
 
@@ -69,7 +71,20 @@ export class RokRepository {
     await this.rokQuestionModel.findByIdAndDelete(id, { new: true }).exec();
   }
 
-  async getRandomQuestion(teamUsername: string) {
+  async nextQuestion() {
+    const question = await this.getRandomQuestion();
+    this.currentQuestionId = question._id;
+    return question;
+  }
+
+  async getCurrentQuestion() {
+    if (!this.currentQuestionId) {
+      throw new BadRequestException('No currently running question');
+    }
+    return await this.rokQuestionModel.findById(this.currentQuestionId).exec();
+  }
+
+  private async getRandomQuestion() {
     const fetchedQuestion = await this.rokQuestionModel
       .aggregate([
         {
@@ -89,14 +104,14 @@ export class RokRepository {
           // @ts-expect-error The aggregation pipeline doesn't recognize the document's type
           _id: fetchedQuestion._id,
         },
-        { selected: true, teamUsername },
+        { selected: true },
         { new: true },
       )
       .exec())!;
   }
 
-  async getCurrentQuestionForTeam(teamUsername: string, round: number) {
-    return await this.rokQuestionModel.findOne({ teamUsername, round }).exec();
+  async getCurrentQuestionForTeam(round: number) {
+    return await this.rokQuestionModel.findOne({ round }).exec();
   }
 
   async getAttacks() {

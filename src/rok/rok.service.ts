@@ -112,10 +112,6 @@ export class RokService implements OnModuleDestroy {
       throw new NotFoundException();
     }
 
-    if (question.teamUsername !== teamUsername) {
-      throw new BadRequestException("Wrong team's question.");
-    }
-
     if (!this.timerService.timerIsRunning()) {
       return false;
     }
@@ -159,17 +155,12 @@ export class RokService implements OnModuleDestroy {
     return false;
   }
 
-  private async getCurrentQuestionForTeam(teamUsername: string) {
-    return await this.rokRepository.getCurrentQuestionForTeam(teamUsername, this.currentRound);
+  async nextQuestion() {
+    return await this.rokRepository.nextQuestion();
   }
 
-  async getQuestionForTeam(teamUsername: string) {
-    const currentQuestion = await this.getCurrentQuestionForTeam(teamUsername);
-    if (!currentQuestion) {
-      return this.rokRepository.getRandomQuestion(teamUsername);
-    }
-
-    return currentQuestion;
+  async getCurrentQuestion() {
+    return await this.rokRepository.getCurrentQuestion();
   }
 
   sendGetQuestionSignal(teams: string[]) {

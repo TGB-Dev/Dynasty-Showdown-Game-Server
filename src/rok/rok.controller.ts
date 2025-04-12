@@ -60,12 +60,20 @@ export class RokController {
     await this.rokService.getAttacks();
   }
 
-  @ApiOperation({ summary: 'Get the question for the team.' })
+  @ApiOperation({ summary: 'Get the current question.' })
   @ApiOkResponse({ description: 'OK.', type: SendRokQuestionDto })
   @UseGuards(AuthGuard(UserRole.PLAYER))
-  @Get('questions/team')
-  async getQuestionForTeam(@Request() req: AuthRequest) {
-    return await this.rokService.getQuestionForTeam(req.user.username);
+  @Get('questions/current')
+  async getCurrentQuestion() {
+    return await this.rokService.getCurrentQuestion();
+  }
+
+  @ApiOperation({ summary: 'Choose the next question.' })
+  @ApiOkResponse({ description: 'OK.', type: SendRokQuestionDto })
+  @UseGuards(AuthGuard(UserRole.PLAYER))
+  @Get('questions/next')
+  async nextQuestion() {
+    return await this.rokService.nextQuestion();
   }
 
   @ApiOperation({ summary: 'Answer the question with `questionId`.' })
