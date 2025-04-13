@@ -33,6 +33,6 @@ export class GameRepository {
   }
 
   async getGameByName(gameName: Room): Promise<Game | null> {
-    return this.gameModel.findOne({ name: gameName }).exec();
+    return this.gameModel.findOne({ game: gameName }).exec();
   }
 }
