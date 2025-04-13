@@ -98,9 +98,8 @@ export class MchgController {
   @ApiUnauthorizedResponse({ description: 'Unauthorized' })
   getImage(@Query('filename') filename: string) {
     const file = createReadStream(join(globalConfigs.assetsRoot, filename));
-    // @ts-expect-error Some weird TS definitions
     return new StreamableFile(file, {
-      type: mime.lookup(filename),
+      type: 'image/png',
     });
   }
 
