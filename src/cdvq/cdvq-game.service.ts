@@ -10,6 +10,7 @@ import { User } from '../schemas/user.schema';
 import { CdvqSubmissionRepository } from './cdvq-submission.repository';
 import { GameRepository } from '../game/game.repository';
 import { Room } from '../common/enum/room.enum';
+import { UserRepository } from '../user/user.repository';
 
 const ROUND_DURATION = 30;
 const READY_DURATION = 3;
@@ -43,6 +44,7 @@ export class CdvqGameService {
     private readonly submissionRepository: CdvqSubmissionRepository,
     private readonly gameRepository: GameRepository,
     private readonly gateway: CdvqGateway,
+    private readonly userRepository: UserRepository,
   ) {}
 
   async startGame() {
@@ -211,6 +213,10 @@ export class CdvqGameService {
 
       await Promise.all(
         submissions.map((submission) => this.submissionRepository.updateScore(submission, criterion.score)),
+      );
+
+      await Promise.all(
+        submissions.map((submission) => this.userRepository.increaseScore(submission.user, criterion.score)),
       );
 
       start = end;

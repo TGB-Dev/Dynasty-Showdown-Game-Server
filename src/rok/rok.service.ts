@@ -9,9 +9,9 @@ import { GameRepository } from '../game/game.repository';
 import { Room } from '../common/enum/room.enum';
 
 const CHOOSE_CITY_TIMEOUT = 20;
-const ATTACK_TIMEOUT = 40;
-const DEFEND_TIMEOUT = 40;
-const UPDATE_RESULTS_TIMEOUT = 40;
+const ATTACK_TIMEOUT = 20;
+const DEFEND_TIMEOUT = 20;
+const UPDATE_RESULTS_TIMEOUT = 20;
 
 @Injectable()
 export class RokService implements OnModuleDestroy {
