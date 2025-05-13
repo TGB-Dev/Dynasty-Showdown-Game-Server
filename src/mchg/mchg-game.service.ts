@@ -131,6 +131,10 @@ export class MchgGameService {
     await this.userRepository.increaseScore(user._id!, MAIN_ANSWER_POINTS);
     await this.answerQueueService.clear();
 
+    // Go to the next round
+    this.roundStage = MchgStage.CHOOSING_QUESTION;
+    this.roundIndex++;
+
     void this.runRound();
   }
 

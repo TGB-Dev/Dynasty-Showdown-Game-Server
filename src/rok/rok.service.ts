@@ -3,15 +3,16 @@ import { RokRepository } from './rok.repository';
 import { RokGateway } from './rok.gateway';
 import { NewRokQuestionDto, RokAnswerQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
 import { RokStage } from '../common/enum/rok/rokStage.enum';
-import { UserRepository } from '../user/user.repository';
 import { RokTimerService } from './rok-timer.service';
 import { GameRepository } from '../game/game.repository';
 import { Room } from '../common/enum/room.enum';
+import { UserRepository } from '../user/user.repository';
 
 const CHOOSE_CITY_TIMEOUT = 20;
 const ATTACK_TIMEOUT = 20;
 const DEFEND_TIMEOUT = 20;
 const UPDATE_RESULTS_TIMEOUT = 20;
+const BFS_DIRECTIONS = [-1, +1, -9, +9];
 
 @Injectable()
 export class RokService implements OnModuleDestroy {
@@ -39,15 +40,19 @@ export class RokService implements OnModuleDestroy {
 
   pauseGame() {
     void this.timerService.pause();
+
+    // Save states
     this.lastStage = this.currentStage;
     this.currentStage = RokStage.PAUSED;
     this.rokGateway.pauseGame();
   }
 
   resumeGame() {
-    void this.timerService.resume();
+    // Recover states
     this.currentStage = this.lastStage;
     this.lastStage = RokStage.PAUSED;
+
+    void this.timerService.resume();
     this.rokGateway.resumeGame();
     void this.runRound();
   }
@@ -85,10 +90,12 @@ export class RokService implements OnModuleDestroy {
     }
 
     if (this.currentStage === RokStage.ATTACK) {
-      await this.rokRepository.nextQuestion(this.currentRound);
+      await this.nextQuestion(this.currentRound);
       this.rokGateway.updateStage(this.currentStage);
 
-      // this.sendGetQuestionSignal(attackingTeams);
+      const attackingTeams = await this.getAttackingTeams();
+      this.sendGetQuestionSignalToTeams(attackingTeams);
+
       await this.timerService.start(ATTACK_TIMEOUT, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
@@ -97,10 +104,12 @@ export class RokService implements OnModuleDestroy {
     }
 
     if (this.currentStage === RokStage.DEFEND) {
-      await this.rokRepository.nextQuestion(this.currentRound);
+      await this.nextQuestion(this.currentRound);
       this.rokGateway.updateStage(this.currentStage);
 
-      // this.sendGetQuestionSignal(teams);
+      // Send the defending question to all teams
+      this.sendGetQuestionSignalToTeams(await this.getAllTeams());
+
       await this.timerService.start(DEFEND_TIMEOUT, (rem) => this.rokGateway.updateTimer(rem));
 
       this.lastStage = this.currentStage;
@@ -109,8 +118,8 @@ export class RokService implements OnModuleDestroy {
     }
 
     if (this.currentStage === RokStage.UPDATE_RESULTS) {
-      await this.rokRepository.updateOwnerships();
-      await this.rokRepository.recalculatePoints();
+      await this.updateOwnerships();
+      await this.recalculatePoints();
       this.rokGateway.updateStage(this.currentStage);
 
       this.rokGateway.updateMatrix();
@@ -125,7 +134,7 @@ export class RokService implements OnModuleDestroy {
   }
 
   async checkInAttackingTeams(username: string) {
-    const teams = await this.rokRepository.getAttackingTeams();
+    const teams = await this.getAttackingTeams();
     if (!teams.includes(username)) {
       throw new BadRequestException('You are not in the attacking teams.');
     }
@@ -133,10 +142,10 @@ export class RokService implements OnModuleDestroy {
   }
 
   async checkInDefendingTeams(username: string) {
-    const teams = await this.rokRepository.getAttacks();
+    const teams = await this.getAttacks();
     const defendingTeams = await Promise.all(
       teams.map(async (team) => {
-        return await this.rokRepository.getOwnershipByCityId(team.cityId);
+        return await this.getOwnershipOfCity(team.cityId);
       }),
     );
     if (!defendingTeams.includes(username)) {
@@ -154,7 +163,7 @@ export class RokService implements OnModuleDestroy {
   }
 
   async answerQuestion(username: string, rokAnswerQuestionDto: RokAnswerQuestionDto) {
-    const question = await this.rokRepository.getCurrentQuestion();
+    const question = await this.getCurrentQuestion();
     if (!question) {
       throw new NotFoundException('Question not found');
     }
@@ -169,30 +178,30 @@ export class RokService implements OnModuleDestroy {
     if (this.currentStage === RokStage.ATTACK) {
       if (question.isMultiple) {
         if (question.correctChoiceIndex !== rokAnswerQuestionDto.choiceIndex) {
-          await this.rokRepository.deleteAttacksOnIncorrectAnswer(username);
+          await this.deleteAttacksOnIncorrectAnswer(username);
           return false;
         } else {
-          await this.rokRepository.markAttackAsSucceeded(username);
+          await this.markAttackAsSucceeded(username);
           return true;
         }
       } else {
         if (question.answer !== rokAnswerQuestionDto.answer) {
-          await this.rokRepository.deleteAttacksOnIncorrectAnswer(username);
+          await this.deleteAttacksOnIncorrectAnswer(username);
           return false;
         } else {
-          await this.rokRepository.markAttackAsSucceeded(username);
+          await this.markAttackAsSucceeded(username);
           return true;
         }
       }
     } else if (this.currentStage === RokStage.DEFEND) {
       if (question.isMultiple) {
         if (question.correctChoiceIndex === rokAnswerQuestionDto.choiceIndex) {
-          await this.rokRepository.defendOnCorrectAnswer(username);
+          await this.defendOnCorrectAnswer(username);
           return true;
         }
       } else {
         if (question.answer === rokAnswerQuestionDto.answer) {
-          await this.rokRepository.defendOnCorrectAnswer(username);
+          await this.defendOnCorrectAnswer(username);
           return true;
         }
       }
@@ -201,8 +210,87 @@ export class RokService implements OnModuleDestroy {
     return false;
   }
 
+  async recalculatePoints() {
+    const cities = await this.rokRepository.getMatrix();
+    const points = {};
+    cities.forEach((c) => {
+      if (c.owner) {
+        if (!points[c.owner]) {
+          points[c.owner] = 0;
+        }
+        points[c.owner] += c.points;
+      }
+    });
+
+    // Bonus points if there is any area of 4 adjacent cities
+    const teams = await this.userRepository.getTeamUsernames();
+    for (const team of teams) {
+      const cities = await this.getCitiesByOwner(team);
+      for (const city of cities) {
+        if (await this.bfs(city.cityId, team)) {
+          points[team] += 100;
+          break;
+        }
+      }
+    }
+
+    for (const [teamUsername, _points] of Object.entries(points)) {
+      const teamId = (await this.userRepository.findUserByUsername(teamUsername))!._id;
+      // @ts-expect-error `ObjectId`s are the same but different (?)
+      await this.userRepository.increaseScore(teamId, _points);
+    }
+  }
+
+  async createQuestion(newQuestion: NewRokQuestionDto) {
+    await this.rokRepository.createQuestion(newQuestion);
+  }
+
+  async getQuestions() {
+    return await this.rokRepository.getQuestions();
+  }
+
+  async getQuestionById(id: string) {
+    return await this.rokRepository.getQuestionById(id);
+  }
+
   async getCurrentQuestion() {
     return await this.rokRepository.getCurrentQuestion();
+  }
+
+  async updateQuestion(id: string, updates: UpdateRokQuestionDto) {
+    return await this.rokRepository.updateQuestion(id, updates);
+  }
+
+  async deleteQuestion(id: string) {
+    return await this.rokRepository.deleteQuestion(id);
+  }
+
+  async nextQuestion(currentRound: number) {
+    return await this.rokRepository.nextQuestion(currentRound);
+  }
+
+  async getCitiesByOwner(teamUsername: string) {
+    return await this.rokRepository.getCitiesByOwner(teamUsername);
+  }
+
+  async getOwnershipOfCity(cityId: number) {
+    return await this.rokRepository.getOwnershipOfCity(cityId);
+  }
+
+  async getMatrix() {
+    return await this.rokRepository.getMatrix();
+  }
+
+  async getAttacks() {
+    return await this.rokRepository.getAttacks();
+  }
+
+  async deleteAttacksOnIncorrectAnswer(teamUsername: string) {
+    await this.rokRepository.deleteAttacksOnIncorrectAnswer(teamUsername);
+  }
+
+  async markAttackAsSucceeded(teamUsername: string) {
+    await this.rokRepository.markAttackAsSucceeded(teamUsername);
   }
 
   async selectCity(teamUsername: string, cityId: number) {
@@ -223,32 +311,43 @@ export class RokService implements OnModuleDestroy {
     this.rokGateway.updateAttacks();
   }
 
-  async createQuestion(newQuestion: NewRokQuestionDto) {
-    await this.rokRepository.createQuestion(newQuestion);
+  async defendOnCorrectAnswer(teamUsername: string) {
+    if (!(this.timerService.timerIsRunning() && this.currentStage === RokStage.DEFEND)) {
+      throw new BadRequestException('Defending stage ended.');
+    }
+
+    await this.rokRepository.defendOnCorrectAnswer(teamUsername);
   }
 
-  async getQuestions() {
-    return await this.rokRepository.getQuestions();
+  async getAttackingTeams() {
+    return await this.rokRepository.getAttackingTeams();
   }
 
-  async getQuestionById(id: string) {
-    return await this.rokRepository.getQuestionById(id);
+  async deleteUnansweredAttacks() {
+    await this.rokRepository.deleteUnansweredAttacks();
   }
 
-  async updateQuestion(id: string, updates: UpdateRokQuestionDto) {
-    return await this.rokRepository.updateQuestion(id, updates);
+  async updateOwnershipOfCity(cityId: number, teamUsername: string) {
+    await this.rokRepository.updateOwnershipOfCity(cityId, teamUsername);
   }
 
-  async deleteQuestion(id: string) {
-    return await this.rokRepository.deleteQuestion(id);
+  async updateOwnerships() {
+    await this.deleteUnansweredAttacks();
+
+    const attacks = await this.getAttacks();
+    for (const attack of attacks) {
+      await this.updateOwnershipOfCity(attack.cityId, attack.attackTeam);
+    }
   }
 
-  async getMatrix() {
-    return await this.rokRepository.getMatrix();
+  async getAllTeams() {
+    return await this.userRepository.getTeamUsernames();
   }
 
-  async getAttacks() {
-    return await this.rokRepository.getAttacks();
+  sendGetQuestionSignalToTeams(teams: string[]) {
+    for (const team of teams) {
+      this.rokGateway.sendGetQuestionSignal(team);
+    }
   }
 
   getCurrentStage() {
@@ -257,5 +356,27 @@ export class RokService implements OnModuleDestroy {
 
   onModuleDestroy() {
     this.timerService.stop();
+  }
+
+  private async bfs(cityId: number, teamUsername: string) {
+    const matrix = await this.getMatrix();
+
+    const q = [{ cityId: cityId, cnt: 1 }];
+    while (q.length > 0) {
+      const curr = q.shift()!;
+
+      if (curr.cnt === 4) {
+        return true;
+      }
+
+      for (const direction of BFS_DIRECTIONS) {
+        const newCityId = curr.cityId + direction;
+        if (0 <= newCityId && newCityId < 81 && matrix.find((c) => c.cityId === newCityId)!.owner === teamUsername) {
+          q.push({ cityId: newCityId, cnt: curr.cnt + 1 });
+        }
+      }
+    }
+
+    return false;
   }
 }

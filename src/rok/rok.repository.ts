@@ -5,18 +5,15 @@ import mongoose, { Model } from 'mongoose';
 import { RokMatrixState } from '../schemas/rok/rokMatrixState.schema';
 import { RokQuestion } from '../schemas/rok/rokQuestion.schema';
 import { NewRokQuestionDto, UpdateRokQuestionDto } from '../dtos/rok.dto';
-import { UserRepository } from '../user/user.repository';
 
 @Injectable()
 export class RokRepository {
   private currentQuestionId: mongoose.Types.ObjectId | null = null;
-  private readonly bfsDirections = [-1, +1, -9, +9];
 
   constructor(
     @InjectModel(RokAttack.name) private readonly rokAttackModel: Model<RokAttack>,
     @InjectModel(RokMatrixState.name) private readonly rokMatrixModel: Model<RokMatrixState>,
     @InjectModel(RokQuestion.name) private readonly rokQuestionModel: Model<RokQuestion>,
-    private readonly userRepository: UserRepository,
   ) {}
 
   async createQuestion(newQuestion: NewRokQuestionDto) {
@@ -33,7 +30,7 @@ export class RokRepository {
     return await this.rokQuestionModel.findById(id).exec();
   }
 
-  async getOwnershipByCityId(cityId: number) {
+  async getOwnershipOfCity(cityId: number) {
     const city = await this.rokMatrixModel.findOne({ cityId }).exec();
     if (!city) {
       throw new NotFoundException('City not found');
@@ -67,10 +64,6 @@ export class RokRepository {
       throw new BadRequestException('No currently running question');
     }
     return await this.rokQuestionModel.findById(this.currentQuestionId).exec();
-  }
-
-  async getCurrentQuestionForTeam(round: number) {
-    return await this.rokQuestionModel.findOne({ round }).exec();
   }
 
   async getAttacks() {
@@ -113,51 +106,16 @@ export class RokRepository {
     await this.rokAttackModel.findOneAndUpdate({ attackTeam: teamUsername }, { answered: true }).exec();
   }
 
-  async updateOwnerships() {
-    // Remove unanswered attacks
+  async deleteUnansweredAttacks() {
     await this.rokAttackModel.deleteMany({ answered: false }).exec();
-
-    const attacks = await this.rokAttackModel.find({}).exec();
-    for (const attack of attacks) {
-      const updatedCity = await this.rokMatrixModel
-        .findOneAndUpdate({ cityId: attack.cityId }, { owner: attack.attackTeam }, { new: true })
-        .exec();
-      if (!updatedCity) {
-        throw new ConflictException(
-          `Failed to update the ownership of city ${attack.cityId} to "${attack.attackTeam}"`,
-        );
-      }
-    }
   }
 
-  async recalculatePoints() {
-    const cities = await this.rokMatrixModel.find().exec();
-    const points = {};
-    cities.forEach((c) => {
-      if (c.owner) {
-        if (!points[c.owner]) {
-          points[c.owner] = 0;
-        }
-        points[c.owner] += c.points;
-      }
-    });
-
-    // Bonus points if there is any area of 4 adjacent cities
-    const teams = await this.userRepository.getTeamUsernames();
-    for (const team of teams) {
-      const cities = await this.rokMatrixModel.find({ owner: team }).exec();
-      for (const city of cities) {
-        if (await this.bfs(city.cityId, team)) {
-          points[team] += 100;
-          break;
-        }
-      }
-    }
-
-    for (const [teamUsername, _points] of Object.entries(points)) {
-      const teamId = (await this.userRepository.findUserByUsername(teamUsername))!._id;
-      // @ts-expect-error `ObjectId`s are the same but different (?)
-      await this.userRepository.increaseScore(teamId, _points);
+  async updateOwnershipOfCity(cityId: number, newTeamUsername: string) {
+    const updatedCity = await this.rokMatrixModel
+      .findOneAndUpdate({ cityId: cityId }, { owner: newTeamUsername }, { new: true })
+      .exec();
+    if (!updatedCity) {
+      throw new ConflictException(`Failed to update the ownership of city ${cityId} to "${newTeamUsername}"`);
     }
   }
 
@@ -165,26 +123,8 @@ export class RokRepository {
     return await this.rokMatrixModel.find({}).exec();
   }
 
-  private async bfs(cityId: number, teamUsername: string) {
-    const matrix = await this.getMatrix();
-
-    const q = [{ cityId: cityId, cnt: 1 }];
-    while (q.length > 0) {
-      const curr = q.shift()!;
-
-      if (curr.cnt === 4) {
-        return true;
-      }
-
-      for (const direction of this.bfsDirections) {
-        const newCityId = curr.cityId + direction;
-        if (0 <= newCityId && newCityId < 81 && matrix.find((c) => c.cityId === newCityId)!.owner === teamUsername) {
-          q.push({ cityId: newCityId, cnt: curr.cnt + 1 });
-        }
-      }
-    }
-
-    return false;
+  async getCitiesByOwner(teamUsername: string) {
+    return await this.rokMatrixModel.find({ owner: teamUsername }).exec();
   }
 
   private async getRandomQuestion(currentRound: number) {

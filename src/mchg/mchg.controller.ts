@@ -38,7 +38,6 @@ import { RoleBasedClassSerializer } from '../common/interceptors/role-based-clas
 import { MchgQuestion } from '../schemas/mchg/mchgQuestion.schema';
 import { createReadStream, writeFileSync } from 'fs';
 import { join } from 'path';
-import mime from 'mime-types';
 
 @ApiTags('Mật chiếu hoàng gia')
 @ApiBearerAuth()

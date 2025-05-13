@@ -1,6 +1,6 @@
 /**
  * @see https://prettier.io/docs/configuration
- * @type {import("prettier").Config}
+ * @type {import('prettier').Config}
  */
 const config = {
   trailingComma: 'all',
