@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { TgoUserData } from '../schemas/tgo/tgo-user-data.schema';
 import { Model } from 'mongoose';
-import {CurrentQuestion} from "../common/interfaces/tgo.interface";
+import { CurrentQuestion } from '../common/interfaces/tgo.interface';
 
 @Injectable()
 export class TgoUserDataRepository {

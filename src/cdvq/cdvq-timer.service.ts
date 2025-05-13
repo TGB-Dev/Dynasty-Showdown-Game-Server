@@ -7,7 +7,6 @@ export class CdvqTimerService {
   private isRunning = false;
   private remainingTime = 0;
   private interval: NodeJS.Timeout | null;
-  private broadcastFn: BroadcastFn = () => {};
 
   tick() {
     return new Promise<void>((resolve) => {
@@ -61,4 +60,6 @@ export class CdvqTimerService {
     this.isRunning = true;
     return this.tick();
   }
+
+  private broadcastFn: BroadcastFn = () => {};
 }

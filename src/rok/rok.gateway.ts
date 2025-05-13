@@ -58,7 +58,7 @@ export class RokGateway {
     this.server.to(Room.ROK).emit('updateAttacks');
   }
 
-  sendQuestion(teamUsername: string) {
+  sendGetQuestionSignal(teamUsername: string) {
     this.server.to(teamUsername).emit('sendQuestion');
   }
 }
